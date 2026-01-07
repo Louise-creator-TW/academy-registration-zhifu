@@ -1,0 +1,7 @@
+node_modules/
+workers/node_modules/
+.DS_Store
+.wrangler/
+workers/.wrangler/
+package-lock.json
+workers/package-lock.json

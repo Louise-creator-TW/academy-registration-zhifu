@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>致福益人學苑 - 懷寧浸信會分校</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>致福益人學苑</h1>
+            <p>懷寧浸信會分校 - 115年春季課程</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html" class="active">首頁</a></li>
+            <li><a href="registration.html">我要報名</a></li>
+            <li><a href="my-registrations.html" id="myRegistrationsLink" style="display:none;">我的報名</a></li>
+            <li><a href="admin.html">課程管理</a></li>
+            <li><a href="records.html">報名記錄</a></li>
+        </ul>
+        <div id="authButtons" class="auth-buttons"></div>
+    </nav>
+
+    <div class="container">
+        <div class="page-title">
+            <h2>歡迎來到致福益人學苑</h2>
+            <p>學習成長、豐富生命、服務社群</p>
+        </div>
+
+        <div style="max-width: 900px; margin: 0 auto;">
+            <section style="background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 3rem;">
+                <h3 style="color: #2c5aa0; margin-bottom: 1.5rem; font-size: 1.8rem; border-bottom: 3px solid #2c5aa0; padding-bottom: 0.5rem;">關於我們</h3>
+                <p style="line-height: 1.8; color: #555; margin-bottom: 1rem;">
+                    致福益人學苑懷寧浸信會分校致力於提供多元化的學習課程，讓學員在身、心、靈各方面都能得到成長與滋養。
+                </p>
+                <p style="line-height: 1.8; color: #555; margin-bottom: 1rem;">
+                    我們的課程涵蓋聖經研讀、詩歌敬拜、健康運動等多個領域，由專業師資授課，提供優質的學習環境。
+                </p>
+                <p style="line-height: 1.8; color: #555;">
+                    115年春季課程現正開放報名，歡迎您加入我們的學習行列！
+                </p>
+            </section>
+
+            <section style="background: linear-gradient(135deg, #2c5aa0 0%, #5c8dd6 100%); padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 3rem; color: white;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.8rem; border-bottom: 3px solid white; padding-bottom: 0.5rem;">課程特色</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-book" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.9;"></i>
+                        <h4 style="margin-bottom: 0.5rem;">專業師資</h4>
+                        <p style="opacity: 0.9;">經驗豐富的專業老師</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.9;"></i>
+                        <h4 style="margin-bottom: 0.5rem;">小班教學</h4>
+                        <p style="opacity: 0.9;">確保學習品質與互動</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <i class="fas fa-heart" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.9;"></i>
+                        <h4 style="margin-bottom: 0.5rem;">溫馨氛圍</h4>
+                        <p style="opacity: 0.9;">友善的學習環境</p>
+                    </div>
+                </div>
+            </section>
+
+            <section style="background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 3rem;">
+                <h3 style="color: #2c5aa0; margin-bottom: 1.5rem; font-size: 1.8rem; border-bottom: 3px solid #2c5aa0; padding-bottom: 0.5rem;">報名資訊</h3>
+                <div style="display: grid; gap: 1rem; margin-top: 1.5rem;">
+                    <div style="display: flex; align-items: start; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <i class="fas fa-calendar-alt" style="color: #2c5aa0; font-size: 1.5rem; margin-right: 1rem; margin-top: 0.25rem;"></i>
+                        <div>
+                            <strong style="color: #2c5aa0; display: block; margin-bottom: 0.25rem;">報名時間</strong>
+                            <span style="color: #555;">即日起至額滿為止</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: start; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <i class="fas fa-map-marker-alt" style="color: #2c5aa0; font-size: 1.5rem; margin-right: 1rem; margin-top: 0.25rem;"></i>
+                        <div>
+                            <strong style="color: #2c5aa0; display: block; margin-bottom: 0.25rem;">上課地點</strong>
+                            <span style="color: #555;">懷寧浸信會（台北市中正區懷寧街）</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: start; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <i class="fas fa-phone" style="color: #2c5aa0; font-size: 1.5rem; margin-right: 1rem; margin-top: 0.25rem;"></i>
+                        <div>
+                            <strong style="color: #2c5aa0; display: block; margin-bottom: 0.25rem;">聯絡電話</strong>
+                            <span style="color: #555;">請洽教會辦公室</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="registration.html" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 3rem;">
+                    <i class="fas fa-edit" style="margin-right: 0.5rem;"></i>
+                    立即報名
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>致福益人學苑 懷寧浸信會分校</strong></p>
+        <p>地址: 台北市中正區懷寧街</p>
+        <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
+    </footer>
+</body>
+</html>
