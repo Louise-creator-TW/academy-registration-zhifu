@@ -1,0 +1,30 @@
+name = "academy-registration-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# 環境變數（非機密，可直接寫入）
+[env.production.vars]
+ENVIRONMENT = "production"
+
+# 機密資訊（Secrets）
+# ⚠️ 不要在此檔案中寫入實際值！
+# 請使用 wrangler secret put 指令設定
+
+# Secrets 清單：
+# - LINE_CHANNEL_ID
+# - LINE_CHANNEL_SECRET
+# - LINE_OA_CHANNEL_ACCESS_TOKEN
+# - JWT_SECRET
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY
+# - SITE_URL
+
+# Workers 設定
+workers_dev = true
+route = ""
+zone_id = ""
+
+# 綁定 KV namespace（選用，用於快取）
+# kv_namespaces = [
+#   { binding = "CACHE", id = "your-kv-namespace-id" }
+# ]
