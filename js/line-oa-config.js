@@ -5,11 +5,8 @@
 
 const LINE_OA_CONFIG = {
     // LINE OA Manager ID
-    // 請將此值替換為您的 LINE Official Account Manager ID
-    // 格式範例：'@123abcde' 或實際的帳號 ID
-    // 可在 LINE Official Account Manager 的 URL 中找到
-    // URL 格式：https://manager.line.biz/account/{YOUR_OA_MANAGER_ID}/...
-    OA_MANAGER_ID: '@310jmfrm',  // ⚠️ 請替換此值
+    // 您的真實 ID (包含 @ 是正確的)
+    OA_MANAGER_ID: '@310jmfrm',
     
     // LINE OA Manager Chat Deep Link 基礎 URL
     CHAT_BASE_URL: 'https://manager.line.biz/account'
@@ -26,7 +23,9 @@ function generateLineOAChatLink(lineUserId) {
         return null;
     }
     
-    if (LINE_OA_CONFIG.OA_MANAGER_ID === '@310jmfrm') {
+    // 檢查 ID 是否為預設值 (防止忘記修改)
+    // 這裡我們只檢查是否為空或是原始的範例文字
+    if (LINE_OA_CONFIG.OA_MANAGER_ID === 'YOUR_OA_MANAGER_ID' || LINE_OA_CONFIG.OA_MANAGER_ID === '') {
         console.warn('⚠️ 請在 js/line-oa-config.js 中設定您的 LINE OA Manager ID');
         return null;
     }
