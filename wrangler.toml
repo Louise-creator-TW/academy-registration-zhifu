@@ -1,4 +1,4 @@
-name = "academy-registration-api"
+name = "academy-registration-zhifu"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
