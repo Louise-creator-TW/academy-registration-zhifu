@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程管理 - 致福益人學苑</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>致福益人學苑</h1>
+            <p>懷寧浸信會分校 - 115年春季課程</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">首頁</a></li>
+            <li><a href="registration.html">我要報名</a></li>
+            <li><a href="my-registrations.html" id="myRegistrationsLink" style="display:none;">我的報名</a></li>
+            <li><a href="admin.html" class="active">課程管理</a></li>
+            <li><a href="records.html">報名記錄</a></li>
+        </ul>
+        <div id="authButtons" class="auth-buttons"></div>
+    </nav>
+
+    <div class="container">
+        <div class="page-title">
+            <h2><i class="fas fa-cog"></i> 課程管理</h2>
+            <p>新增、編輯或刪除課程資訊</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="admin-controls">
+            <h3 style="color: #2c5aa0; margin: 0;">
+                <i class="fas fa-list"></i> 課程列表
+            </h3>
+            <button class="btn btn-success" onclick="openAddModal()">
+                <i class="fas fa-plus"></i> 新增課程
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table id="coursesTable">
+                <thead>
+                    <tr>
+                        <th>課程名稱</th>
+                        <th>授課老師</th>
+                        <th>上課時間</th>
+                        <th>費用</th>
+                        <th>報名人數</th>
+                        <th>額滿狀態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="coursesTableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 3rem;">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>載入資料中...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 新增/編輯課程 Modal -->
+        <div id="courseModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> <span id="modalTitle">新增課程</span></h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="courseForm">
+                        <input type="hidden" id="courseId">
+                        <input type="hidden" id="currentEnrolled">
+
+                        <div class="form-group">
+                            <label for="courseName" class="required">課程名稱</label>
+                            <input type="text" id="courseName" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="teacher" class="required">授課老師</label>
+                            <input type="text" id="teacher" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="time" class="required">上課時間</label>
+                            <input type="text" id="time" class="form-control" required placeholder="例：每週三 09:30-11:30">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location" class="required">上課地點</label>
+                            <input type="text" id="location" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cost" class="required">課程費用（元）</label>
+                            <input type="number" id="cost" class="form-control" required min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="capacity" class="required">招生人數</label>
+                            <input type="number" id="capacity" class="form-control" required min="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="required">課程描述</label>
+                            <textarea id="description" class="form-control" required rows="4"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="isFull"> 設定為額滿狀態
+                            </label>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                <i class="fas fa-save"></i> 儲存
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                                <i class="fas fa-times"></i> 取消
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 刪除確認 Modal -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> 確認刪除</h3>
+                    <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">確定要刪除課程「<strong id="deleteCourseNameDisplay"></strong>」嗎？</p>
+                    <p style="color: #e74c3c; margin-bottom: 2rem;">
+                        <i class="fas fa-exclamation-circle"></i> 此操作無法復原！
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-danger" onclick="confirmDelete()" style="flex: 1;">
+                            <i class="fas fa-trash"></i> 確定刪除
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeDeleteModal()" style="flex: 1;">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>致福益人學苑 懷寧浸信會分校</strong></p>
+        <p>地址: 台北市中正區懷寧街</p>
+        <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
+    </footer>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

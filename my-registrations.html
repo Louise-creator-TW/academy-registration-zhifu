@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的報名 - 致福益人學苑</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="js/auth.js"></script>
+    <script src="js/bank-config.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>致福益人學苑</h1>
+            <p>懷寧浸信會分校 - 115年春季課程</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">首頁</a></li>
+            <li><a href="registration.html">我要報名</a></li>
+            <li><a href="my-registrations.html" class="active">我的報名</a></li>
+            <li><a href="admin.html">課程管理</a></li>
+            <li><a href="records.html">報名記錄</a></li>
+        </ul>
+        <div id="authButtons" class="auth-buttons"></div>
+    </nav>
+
+    <div class="container">
+        <div class="page-title">
+            <h2><i class="fas fa-list-alt"></i> 我的報名</h2>
+            <p>查看您所有的報名記錄</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- 用戶資訊卡片 -->
+        <div id="userInfoCard" class="user-info-card" style="display:none;">
+            <div class="user-info-content">
+                <img id="userAvatar" src="" alt="用戶頭像" class="user-info-avatar">
+                <div class="user-info-text">
+                    <h3 id="userName"></h3>
+                    <p id="userMobile"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 報名列表 -->
+        <div id="registrationsContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>載入報名記錄中...</p>
+            </div>
+        </div>
+
+        <!-- 報名詳細資訊 Modal -->
+        <div id="detailModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-file-alt"></i> 報名詳細資料</h3>
+                    <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="detailContent"></div>
+                    <div style="margin-top: 2rem; text-align: right;">
+                        <button class="btn btn-secondary" onclick="closeDetailModal()">
+                            <i class="fas fa-times"></i> 關閉
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>致福益人學苑 懷寧浸信會分校</strong></p>
+        <p>地址: 台北市中正區懷寧街</p>
+        <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
+    </footer>
+
+    <script src="js/my-registrations.js"></script>
+</body>
+</html>

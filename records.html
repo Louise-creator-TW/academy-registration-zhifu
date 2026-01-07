@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>報名記錄 - 致福益人學苑</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="js/auth.js"></script>
+    <script src="js/line-oa-config.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>致福益人學苑</h1>
+            <p>懷寧浸信會分校 - 115年春季課程</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">首頁</a></li>
+            <li><a href="registration.html">我要報名</a></li>
+            <li><a href="my-registrations.html" id="myRegistrationsLink" style="display:none;">我的報名</a></li>
+            <li><a href="admin.html">課程管理</a></li>
+            <li><a href="records.html" class="active">報名記錄</a></li>
+        </ul>
+        <div id="authButtons" class="auth-buttons"></div>
+    </nav>
+
+    <div class="container">
+        <div class="page-title">
+            <h2><i class="fas fa-clipboard-list"></i> 報名記錄</h2>
+            <p>查看所有學員報名資料</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="admin-controls">
+            <div>
+                <h3 style="color: #2c5aa0; margin: 0 0 0.5rem 0;">
+                    <i class="fas fa-users"></i> 報名列表
+                </h3>
+                <p style="color: #7f8c8d; margin: 0;">共 <strong id="totalCount">0</strong> 筆報名記錄</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <select id="semesterFilter" class="form-control" style="width: 150px;" onchange="filterRecords()">
+                    <option value="">所有季度</option>
+                    <option value="114春季">114春季</option>
+                    <option value="114秋季">114秋季</option>
+                    <option value="115春季" selected>115春季</option>
+                    <option value="115秋季">115秋季</option>
+                    <option value="116春季">116春季</option>
+                    <option value="116秋季">116秋季</option>
+                </select>
+                <select id="courseFilter" class="form-control" style="width: 250px;" onchange="filterRecords()">
+                    <option value="">所有課程</option>
+                </select>
+                <button class="btn btn-success" onclick="exportSeasonData()">
+                    <i class="fas fa-file-excel"></i> 匯出季度名單
+                </button>
+                <button class="btn btn-primary" onclick="exportData()">
+                    <i class="fas fa-download"></i> 匯出資料
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>報名日期</th>
+                        <th>課程名稱</th>
+                        <th>學員姓名</th>
+                        <th>性別</th>
+                        <th>年齡區段</th>
+                        <th>手機號碼</th>
+                        <th>繳費方式</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 3rem;">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>載入資料中...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 詳細資料 Modal -->
+        <div id="detailModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user"></i> 報名詳細資料</h3>
+                    <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="detailContent"></div>
+                    <div style="margin-top: 2rem; text-align: right;">
+                        <button class="btn btn-secondary" onclick="closeDetailModal()">
+                            <i class="fas fa-times"></i> 關閉
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 刪除確認 Modal -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> 確認刪除</h3>
+                    <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">確定要刪除此筆報名記錄嗎？</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>學員：</strong><span id="deleteStudentName"></span></p>
+                    <p style="margin-bottom: 1.5rem;"><strong>課程：</strong><span id="deleteCourseName"></span></p>
+                    <p style="color: #e74c3c; margin-bottom: 2rem;">
+                        <i class="fas fa-exclamation-circle"></i> 此操作無法復原！
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-danger" onclick="confirmDelete()" style="flex: 1;">
+                            <i class="fas fa-trash"></i> 確定刪除
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeDeleteModal()" style="flex: 1;">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>致福益人學苑 懷寧浸信會分校</strong></p>
+        <p>地址: 台北市中正區懷寧街</p>
+        <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
+    </footer>
+
+    <script src="js/records.js"></script>
+</body>
+</html>
