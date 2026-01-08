@@ -108,26 +108,17 @@ const AuthManager = {
     },
     
     // LINE 登入
-    lineLogin() {
-        // ⚠️ 這裡需要替換為實際的 LINE Channel ID 和 Callback URL
-        const LINE_CHANNEL_ID = '2008825862'; // 請替換
-        const REDIRECT_URI = encodeURIComponent(window.location.origin + '/api/line-callback');
-        const STATE = this.generateState();
-        
-        localStorage.setItem('line_login_state', STATE);
-        
-        // bot_prompt=aggressive 會引導用戶加入 LINE OA 好友
-        const lineLoginUrl = 
-            `https://access.line.me/oauth2/v2.1/authorize?` +
-            `response_type=code` +
-            `&client_id=${LINE_CHANNEL_ID}` +
-            `&redirect_uri=${REDIRECT_URI}` +
-            `&state=${STATE}` +
-            `&scope=profile%20openid` +
-            `&bot_prompt=aggressive`;
-        
-        window.location.href = lineLoginUrl;
-    },
+   lineLogin() {
+    if (!LINE_CONFIG.validate()) {
+        alert('LINE 登入設定錯誤');
+        return;
+    }
+    
+    const STATE = this.generateState();
+    const lineLoginUrl = LINE_CONFIG.getLoginUrl(STATE);
+    window.location.href = lineLoginUrl;
+}
+
     
     // 產生隨機 state
     generateState() {
