@@ -11,37 +11,37 @@ export async function handleCoursesRequest(request, env) {
       return jsonResponse(courses);
     }
 
-    // POST: 新增課程 (✅ 修正後的版本)
+    /// POST: 新增課程
     if (method === 'POST') {
       try {
         const data = await request.json();
 
-        // 1. 🛡️ 必填欄位檢查 (Genspark 建議)
-        // 我們不再檢查 id，而是檢查真正重要的資料
+        // 1. 🛡️ 必填欄位檢查
         if (!data.name || !data.teacher || !data.cost) {
+          // 🔴 修改點 1：把 { status: 400 } 改成 400
           return jsonResponse(
             { error: '缺少必要欄位: 課程名稱、老師或費用' }, 
-            { status: 400 }
+            400 
           );
         }
 
-        // 2. 🔢 數值型別轉換 (保留原本好的防呆邏輯)
-        // 確保傳進資料庫的是數字，而不是字串 "1500"
+        // 2. 🔢 數值型別轉換
         if (data.cost) data.cost = parseInt(data.cost);
         if (data.capacity) data.capacity = parseInt(data.capacity);
         
-        // 注意：這裡完全不處理 data.id，也不處理 current_enrolled
-        // 全部交給資料庫的預設值 (DEFAULT) 去自動生成
-
+        // 呼叫建立課程
         const newCourse = await createCourse(data, env);
-        return jsonResponse(newCourse, { status: 201 });
+        
+        // 🔴 修改點 2：把 { status: 201 } 改成 201
+        return jsonResponse(newCourse, 201);
 
       } catch (error) {
         console.error('Create course error:', error);
-        return jsonResponse({ error: error.message }, { status: 500 });
+        // 🔴 修改點 3：把 { status: 500 } 改成 500
+        return jsonResponse({ error: error.message }, 500);
       }
     }
-    
+
     // PUT: 更新課程
     if (method === 'PUT') {
       const id = url.searchParams.get('id');

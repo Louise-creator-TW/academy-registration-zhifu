@@ -1,7 +1,6 @@
-**
- * LINE Login 配置檔
- * 統一管理LINE相關設定
- */
+//LINE Login 配置檔
+ //統一管理LINE相關設定//
+
 
 const LINE_CONFIG = {
     // ⚠️ 請設定您的 LINE Channel ID

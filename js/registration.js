@@ -62,11 +62,20 @@ function toggleProxyRegistrationInfo() {
 }
 
 // 載入課程列表
+import { ApiHelper } from './api-config.js';
+
 async function loadCourses() {
     try {
-        const response = await fetch('tables/courses?limit=100');
-        const result = await response.json();
-        courses = result.data;
+        console.log('📥 載入課程列表...');
+        
+        // ✅ 修改點：使用 ApiHelper (會自動連到 Worker)，而不是 fetch 相對路徑
+        const result = await ApiHelper.get('api/courses', { limit: 100 });
+        
+        console.log('✅ 課程載入成功:', result);
+        
+        // 確保資料格式正確 (有些 API 回傳格式可能是 { data: [...] } 或直接是 [...])
+        courses = Array.isArray(result) ? result : (result.data || []);
+        
         displayCourses();
     } catch (error) {
         console.error('載入課程失敗:', error);

@@ -35,8 +35,12 @@ function displayUserInfo() {
 // 載入我的報名記錄
 async function loadMyRegistrations() {
     try {
-        const response = await fetch('tables/registrations?limit=1000&sort=-registration_date');
-        const result = await response.json();
+        console.log('📥 載入報名記錄...');
+        const result = await ApiHelper.get('api/registrations', { 
+            limit: 1000, 
+            sort: '-registration_date' 
+        });
+        console.log('✅ 報名記錄載入成功:', result);
         
         // 篩選出當前用戶的報名記錄
         myRegistrations = result.data.filter(r => 

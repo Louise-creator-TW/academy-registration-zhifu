@@ -4,9 +4,10 @@
  */
 
 import { handleLineCallback } from './handlers/line-callback';
-import { handleRegistrationSubmit } from './handlers/registration';
+import { handleRegistrationSubmit } from './handlers/registrations';
 import { handleLineTagging } from './handlers/line-tagging';
 import { handleCoursesRequest } from './handlers/courses';
+import { handleRegistrationsRequest } from './handlers/registrations';
 
 export default {
   async fetch(request, env, ctx) {
@@ -22,6 +23,11 @@ export default {
       // 課程管理 API
       if (path.startsWith('/api/courses')) {
         return await handleCoursesRequest(request, env);
+      }
+      
+      // 報名記錄 API
+      if (path.startsWith('/api/registrations')) {
+        return await handleRegistrationsRequest(request, env);
       }
       
       // LINE Login 回調
@@ -73,6 +79,7 @@ function handleCORS() {
     }
   });
 }
+
 
 /**
  * JSON Response 輔助函數
