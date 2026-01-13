@@ -1,6 +1,6 @@
-// 報名頁面 JavaScript
-// 1. 只保留真的 Module 的 import
-import { ApiHelper } from './api-config.js';
+// registration.js
+// 1. 移除 import，直接使用全域的 ApiHelper
+// import { ApiHelper } from './api-config.js';  <--- 刪除或註解掉這行
 
 // 2. AuthManager 不需要 import，直接用！
 // 因為 auth.js 已經在 HTML 裡載入並綁定到 window 了
