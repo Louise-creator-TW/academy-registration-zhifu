@@ -341,6 +341,11 @@ function showAlert(message, type = 'info') {
     }, 3000);
 }
 
+// === 將需要被 HTML onclick 呼叫的函式公開到全域 ===
+window.openRegistrationForm = openRegistrationForm;
+// 如果您的「取消」或「關閉」按鈕也有在 HTML 寫 onclick="closeModal()"，請把下面這行也加上：
+window.closeModal = closeModal;
+
 // === 事件監聽綁定區 ===
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM載入完成，開始綁定事件...');
