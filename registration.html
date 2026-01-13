@@ -6,229 +6,180 @@
     <title>課程報名 - 致福益人學苑</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <script src="js/line-config.js?v=2"></script>
-    <script src="js/auth.js?v=2"></script>
-    <script src="js/bank-config.js?v=2"></script>
-</head>
+    
+    </head>
 <body>
     <header>
         <div class="header-content">
             <h1>致福益人學苑</h1>
             <p>懷寧浸信會分校 - 115年春季課程</p>
         </div>
+        <nav>
+            <a href="index.html">首頁</a>
+            <a href="registration.html" class="active">課程報名</a>
+            <a href="my-registrations.html" id="myRegistrationsLink" style="display: none;">我的報名</a>
+            <a href="admin.html">課程管理</a>
+            <a href="records.html">報名記錄</a>
+            <div id="authButtons"></div>
+        </nav>
     </header>
 
-    <nav>
-        <ul>
-            <li><a href="index.html">首頁</a></li>
-            <li><a href="registration.html" class="active">我要報名</a></li>
-            <li><a href="my-registrations.html" id="myRegistrationsLink" style="display:none;">我的報名</a></li>
-            <li><a href="admin.html">課程管理</a></li>
-            <li><a href="records.html">報名記錄</a></li>
-        </ul>
-        <div id="authButtons" class="auth-buttons"></div>
-    </nav>
-
-    <div class="container">
-        <div class="page-title">
-            <h2><i class="fas fa-clipboard-list"></i> 課程報名</h2>
-            <p>選擇您想報名的課程，填寫報名表單</p>
-        </div>
-
-        <div id="alertContainer"></div>
-
-        <!-- 課程列表 -->
-        <section>
-            <h3 style="color: #2c5aa0; margin-bottom: 1.5rem; font-size: 1.8rem;">
-                <i class="fas fa-book-open"></i> 開設課程
-            </h3>
+    <main>
+        <section class="registration-section">
+            <h2>課程報名</h2>
+            
             <div id="coursesContainer" class="courses-grid">
                 <div class="loading">
-                    <div class="spinner"></div>
-                    <p>載入課程資料中...</p>
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>載入資料中...</p>
                 </div>
             </div>
         </section>
+    </main>
 
-        <!-- 報名表單 Modal -->
-        <div id="registrationModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-edit"></i> 報名表單</h3>
-                    <button class="close-btn" onclick="closeModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="registrationForm">
-                        <input type="hidden" id="courseId" name="course_id">
-                        <input type="hidden" id="courseName" name="course_name">
-
+    <div id="registrationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            
+            <h3>課程報名表</h3>
+            <div id="selectedCourseInfo"></div>
+            
+            <form id="registrationForm">
+                <input type="hidden" id="courseId" name="course_id">
+                <input type="hidden" id="courseName" name="course_name">
+                
+                <div class="form-section">
+                    <h4>個人資訊</h4>
+                    
+                    <div class="form-group">
+                        <label for="studentName">姓名 *</label>
+                        <input type="text" id="studentName" name="name" required>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
-                            <label>報名課程</label>
-                            <input type="text" id="displayCourseName" class="form-control" disabled>
-                        </div>
-
-                        <h4 style="color: #2c5aa0; margin: 2rem 0 1rem; border-bottom: 2px solid #2c5aa0; padding-bottom: 0.5rem;">
-                            <i class="fas fa-user"></i> 個人基本資料
-                        </h4>
-
-                        <div class="form-group">
-                            <label for="name" class="required">姓名</label>
-                            <input type="text" id="name" name="name" class="form-control" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="required">性別</label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="gender" value="男" required> 男
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="gender" value="女" required> 女
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="ageRange" class="required">年齡區段</label>
-                            <select id="ageRange" name="age_range" class="form-control" required>
-                                <option value="">請選擇年齡區段</option>
-                                <option value="45以下">45以下</option>
-                                <option value="45～55">45～55</option>
-                                <option value="55～65">55～65</option>
-                                <option value="65～75">65～75</option>
-                                <option value="75以上">75以上</option>
-                            </select>
-                        </div>
-
-                        <h4 style="color: #2c5aa0; margin: 2rem 0 1rem; border-bottom: 2px solid #2c5aa0; padding-bottom: 0.5rem;">
-                            <i class="fas fa-phone"></i> 聯絡資訊
-                        </h4>
-
-                        <div class="form-group">
-                            <label for="mobile" class="required">手機號碼</label>
-                            <input type="tel" id="mobile" name="mobile" class="form-control" required placeholder="例：0912-345678">
-                        </div>
-
-                        <h4 style="color: #2c5aa0; margin: 2rem 0 1rem; border-bottom: 2px solid #2c5aa0; padding-bottom: 0.5rem;">
-                            <i class="fas fa-exclamation-triangle"></i> 緊急聯絡人
-                        </h4>
-
-                        <div class="form-group">
-                            <label for="emergencyContact" class="required">緊急聯絡人姓名</label>
-                            <input type="text" id="emergencyContact" name="emergency_contact" class="form-control" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="emergencyPhone" class="required">緊急聯絡人電話</label>
-                            <input type="tel" id="emergencyPhone" name="emergency_phone" class="form-control" required>
-                        </div>
-
-                        <h4 style="color: #2c5aa0; margin: 2rem 0 1rem; border-bottom: 2px solid #2c5aa0; padding-bottom: 0.5rem;">
-                            <i class="fas fa-info-circle"></i> 其他資訊
-                        </h4>
-
-                        <div class="form-group">
-                            <label for="religion" class="required">宗教信仰</label>
-                            <select id="religion" name="religion" class="form-control" required>
-                                <option value="">請選擇宗教信仰</option>
-                                <option value="基督教">基督教</option>
-                                <option value="佛教">佛教</option>
-                                <option value="道教">道教</option>
+                            <label for="gender">性別 *</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">請選擇</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
                                 <option value="其他">其他</option>
                             </select>
                         </div>
-
-                        <h4 style="color: #2c5aa0; margin: 2rem 0 1rem; border-bottom: 2px solid #2c5aa0; padding-bottom: 0.5rem;">
-                            <i class="fas fa-user-friends"></i> 報名類型
-                        </h4>
-
+                        
                         <div class="form-group">
-                            <div style="background-color: #ecf0f1; padding: 1rem; border-radius: 8px; border-left: 4px solid #3498db;">
-                                <label style="display: flex; align-items: center; cursor: pointer; margin: 0;">
-                                    <input type="checkbox" id="isProxyRegistration" name="is_proxy_registration" 
-                                           style="width: 20px; height: 20px; margin-right: 0.75rem; cursor: pointer;"
-                                           onchange="toggleProxyRegistrationInfo()">
-                                    <span style="font-size: 1.05rem;">
-                                        <i class="fas fa-hands-helping"></i> 
-                                        <strong>替別人報名</strong>
-                                    </span>
-                                </label>
-                                <small style="color: #555; margin-top: 0.5rem; margin-left: 2.5rem; display: block; line-height: 1.5;">
-                                    <i class="fas fa-info-circle"></i> 
-                                    勾選此項表示您是幫他人代為報名（例如：幫家人、朋友報名）<br>
-                                    <span style="color: #e74c3c; font-weight: 500;">
-                                        ⚠️ 注意：勾選後，同一課程可重複報名多次
-                                    </span>
-                                </small>
-                            </div>
-                            <div id="proxyRegistrationInfo" style="display: none; margin-top: 1rem; padding: 1rem; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 8px;">
-                                <p style="margin: 0; color: #856404; font-size: 0.95rem; line-height: 1.6;">
-                                    <i class="fas fa-exclamation-triangle"></i> <strong>代理報名提醒：</strong><br>
-                                    • 您正在以自己的帳號幫他人報名<br>
-                                    • 請確實填寫學員本人的資料（姓名、手機、緊急聯絡人等）<br>
-                                    • LINE 通知將發送到您的帳號，請協助轉達給學員本人
-                                </p>
-                            </div>
-                        </div>
-
-                        <h4 style="color: #2c5aa0; margin: 2rem 0 1rem; border-bottom: 2px solid #2c5aa0; padding-bottom: 0.5rem;">
-                            <i class="fas fa-credit-card"></i> 繳費資訊
-                        </h4>
-
-                        <div class="form-group">
-                            <label for="paymentMethod" class="required">繳費方式</label>
-                            <select id="paymentMethod" name="payment_method" class="form-control" required onchange="toggleAccountField()">
-                                <option value="">請選擇繳費方式</option>
-                                <option value="轉帳繳費">轉帳繳費</option>
-                                <option value="現場繳費">現場繳費</option>
+                            <label for="ageRange">年齡區段 *</label>
+                            <select id="ageRange" name="age_range" required>
+                                <option value="">請選擇</option>
+                                <option value="18-30">18-30歲</option>
+                                <option value="31-40">31-40歲</option>
+                                <option value="41-50">41-50歲</option>
+                                <option value="51-60">51-60歲</option>
+                                <option value="61-70">61-70歲</option>
+                                <option value="71+">71歲以上</option>
                             </select>
                         </div>
-
-                        <div class="form-group" id="accountFieldGroup" style="display: none;">
-                            <label for="accountLast5" class="required">轉帳帳號後5碼</label>
-                            <input type="text" id="accountLast5" name="account_last5" class="form-control" 
-                                   placeholder="請輸入轉帳帳號後5碼" maxlength="5" pattern="[0-9]{5}">
-                            <small style="color: #7f8c8d; margin-top: 0.25rem; display: block;">
-                                <i class="fas fa-info-circle"></i> 請輸入5位數字
-                            </small>
-                        </div>
-
-                        <!-- 銀行帳戶資訊顯示區 -->
-                        <div class="form-group" id="bankInfoDisplay" style="display: none;">
-                            <div class="bank-info-card">
-                                <h5 style="color: #2c5aa0; margin-bottom: 1rem; font-size: 1.2rem;">
-                                    <i class="fas fa-university"></i> 轉帳帳戶資訊
-                                </h5>
-                                <div id="bankInfoContent"></div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="notes">備註</label>
-                            <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="其他想告訴我們的事項"></textarea>
-                        </div>
-
-                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1;">
-                                <i class="fas fa-paper-plane"></i> 送出報名
-                            </button>
-                            <button type="button" class="btn btn-secondary" onclick="closeModal()">
-                                <i class="fas fa-times"></i> 取消
-                            </button>
-                        </div>
-                    </form>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mobile">手機號碼 *</label>
+                        <input type="tel" id="mobile" name="mobile" pattern="[0-9]{10}" required>
+                        <small>請輸入10碼手機號碼</small>
+                    </div>
                 </div>
-            </div>
+                
+                <div class="form-section">
+                    <h4>緊急聯絡人</h4>
+                    
+                    <div class="form-group">
+                        <label for="emergencyName">姓名 *</label>
+                        <input type="text" id="emergencyName" name="emergency_contact_name" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emergencyPhone">電話 *</label>
+                            <input type="tel" id="emergencyPhone" name="emergency_contact_phone" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="emergencyRelation">關係 *</label>
+                            <input type="text" id="emergencyRelation" name="emergency_contact_relation" placeholder="例：配偶、子女、朋友" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h4>繳費資訊</h4>
+                    
+                    <div class="form-group">
+                        <label for="paymentMethod">繳費方式 *</label>
+                        <select id="paymentMethod" name="payment_method" required>
+                            <option value="">請選擇</option>
+                            <option value="轉帳繳費">轉帳繳費</option>
+                            <option value="現場繳費">現場繳費</option>
+                        </select>
+                    </div>
+                    
+                    <div id="accountFieldGroup" class="form-group" style="display: none;">
+                        <label for="accountLast5">轉帳帳號後5碼 *</label>
+                        <input type="text" id="accountLast5" name="account_last5" pattern="[0-9]{5}" maxlength="5">
+                        <small>請填寫您轉帳帳戶的後5碼，以便核對</small>
+                    </div>
+                    
+                    <div id="bankInfoDisplay" class="bank-info-card" style="display: none;">
+                        <h5><i class="fas fa-university"></i> 匯款帳戶資訊</h5>
+                        <div id="bankInfoContent"></div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isProxyRegistration" name="is_proxy">
+                            <span>代理他人報名</span>
+                        </label>
+                        <small>勾選此項表示您是協助他人報名</small>
+                    </div>
+                    
+                    <div id="proxyRegistrationInfo" class="proxy-info" style="display: none;">
+                        <div class="info-box info-warning">
+                            <i class="fas fa-info-circle"></i>
+                            <p><strong>代理報名說明：</strong></p>
+                            <ul>
+                                <li>報名成功後，LINE 通知會發送給<strong>您（代理人）</strong></li>
+                                <li>請記得將課程資訊轉達給實際參加課程的學員</li>
+                                <li>繳費資訊會顯示在 LINE 通知中</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="notes">備註</label>
+                        <textarea id="notes" name="notes" rows="3" placeholder="如有特殊需求或想告知我們的事項，請填寫於此"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary cancel-btn">取消</button>
+                    <button type="submit" class="btn btn-primary">確認報名</button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <div id="alertContainer"></div>
 
     <footer>
         <p><strong>致福益人學苑 懷寧浸信會分校</strong></p>
         <p>地址: 台北市中正區懷寧街</p>
         <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
     </footer>
+<script src="js/auth.js?v=2"></script>
 
-    <script src="js/api-config.js?v=2"></script>
-    <script src="js/registration.js?v=2"></script>
+<script type="module" src="js/registration.js?v=2"></script>
+
 </body>
 </html>

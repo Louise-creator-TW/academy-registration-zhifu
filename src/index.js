@@ -4,16 +4,17 @@
  */
 
 import { handleLineCallback } from './handlers/line-callback';
-import { handleRegistrationSubmit } from './handlers/registrations';
+import { handleRegistrationSubmit } from './handlers/registration';
 import { handleLineTagging } from './handlers/line-tagging';
 import { handleCoursesRequest } from './handlers/courses';
 import { handleRegistrationsRequest } from './handlers/registrations';
+import { jsonResponse, corsResponse } from './utils/response';
 
 export default {
   async fetch(request, env, ctx) {
     // CORS 處理
     if (request.method === 'OPTIONS') {
-      return handleCORS();
+      return corsResponse();
     }
 
     const url = new URL(request.url);
@@ -65,32 +66,3 @@ export default {
     }
   }
 };
-
-/**
- * 處理 CORS
- */
-function handleCORS() {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400',
-    }
-  });
-}
-
-
-/**
- * JSON Response 輔助函數
- */
-function jsonResponse(data, options = {}) {
-  return new Response(JSON.stringify(data), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      ...options.headers
-    },
-    status: options.status || 200
-  });
-}

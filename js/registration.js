@@ -1,5 +1,12 @@
 // 報名頁面 JavaScript
+// 1. 只保留真的 Module 的 import
+import { ApiHelper } from './api-config.js';
 
+// 2. AuthManager 不需要 import，直接用！
+// 因為 auth.js 已經在 HTML 裡載入並綁定到 window 了
+console.log('AuthManager 狀態:', window.AuthManager);
+
+// 2. 全域變數宣告
 let courses = [];
 let selectedCourse = null;
 
@@ -62,20 +69,12 @@ function toggleProxyRegistrationInfo() {
 }
 
 // 載入課程列表
-import { ApiHelper } from './api-config.js';
-
 async function loadCourses() {
     try {
         console.log('📥 載入課程列表...');
-        
-        // ✅ 修改點：使用 ApiHelper (會自動連到 Worker)，而不是 fetch 相對路徑
         const result = await ApiHelper.get('api/courses', { limit: 100 });
-        
         console.log('✅ 課程載入成功:', result);
-        
-        // 確保資料格式正確 (有些 API 回傳格式可能是 { data: [...] } 或直接是 [...])
-        courses = Array.isArray(result) ? result : (result.data || []);
-        
+        courses = result.data || [];
         displayCourses();
     } catch (error) {
         console.error('載入課程失敗:', error);
@@ -340,3 +339,34 @@ function showAlert(message, type = 'info') {
         setTimeout(() => alert.remove(), 300);
     }, 3000);
 }
+// === 事件監聽綁定區 ===
+// 確保 HTML 載入完成後才執行綁定，避免找不到元素報錯
+// === 將這段代碼貼到 js/registration.js 最下方 ===
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM載入完成，開始綁定事件...');
+
+    // 1. 綁定「右上角 X」關閉按鈕
+    const closeSpan = document.querySelector('.close');
+    if (closeSpan) {
+        closeSpan.addEventListener('click', closeRegistrationModal);
+    }
+
+    // 2. 綁定「取消」按鈕 (我有在 HTML 加了 class="cancel-btn" 方便選取，或者用 .btn-secondary)
+    const cancelBtn = document.querySelector('.btn-secondary');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeRegistrationModal);
+    }
+
+    // 3. 綁定「繳費方式」切換
+    const paymentSelect = document.getElementById('paymentMethod');
+    if (paymentSelect) {
+        paymentSelect.addEventListener('change', toggleAccountField);
+    }
+
+    // 4. 綁定「代理報名」切換
+    const proxyCheckbox = document.getElementById('isProxyRegistration');
+    if (proxyCheckbox) {
+        proxyCheckbox.addEventListener('change', toggleProxyRegistrationInfo);
+    }
+});
