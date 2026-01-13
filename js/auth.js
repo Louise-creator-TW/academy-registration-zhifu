@@ -1,28 +1,54 @@
-// 全局認證管理模組
+// ==========================================
+// 1. LINE 設定區域 (直接合併在這裡，保證讀得到)
+// ==========================================
+const LINE_CONFIG = {
+    // ⚠️ 請確認這是您的 Channel ID
+    CHANNEL_ID: '2008825862',  
+    
+    // ⚠️ (關鍵修改) 請填入您的 Workers 後端網址
+    // 這會把 LINE 帶來的 "Code" 交給後端處理，後端處理完會再把您帶回首頁並附上 "Token"
+    getCallbackUrl() {
+        return 'https://academy-registration-api.zhifu-acadamy-bot-2026.workers.dev/api/line-callback';
+    },
+    
+    // LINE 授權端點
+    AUTHORIZE_URL: 'https://access.line.me/oauth2/v2.1/authorize',
+    
+    // 產生 LINE Login URL
+    getLoginUrl(state) {
+        const params = new URLSearchParams({
+            response_type: 'code',
+            client_id: this.CHANNEL_ID,
+            redirect_uri: this.getCallbackUrl(),
+            state: state,
+            scope: 'profile openid',
+            bot_prompt: 'aggressive'
+        });
+        return `${this.AUTHORIZE_URL}?${params.toString()}`;
+    }
+};
 
+// ==========================================
+// 2. 認證管理邏輯
+// ==========================================
 const AuthManager = {
-    // 儲存鍵名
     STORAGE_KEY: 'cf_academy_auth',
     USER_KEY: 'cf_academy_user',
     
-    // 初始化
     init() {
         this.checkAuthStatus();
         this.updateUIForAuthStatus();
     },
     
-    // 檢查登入狀態
     isLoggedIn() {
         const token = localStorage.getItem(this.STORAGE_KEY);
         const user = this.getCurrentUser();
         return !!(token && user);
     },
     
-    // 取得當前用戶
     getCurrentUser() {
         const userStr = localStorage.getItem(this.USER_KEY);
         if (!userStr) return null;
-        
         try {
             return JSON.parse(userStr);
         } catch (error) {
@@ -31,18 +57,15 @@ const AuthManager = {
         }
     },
     
-    // 儲存用戶資訊
     setUser(userData) {
         localStorage.setItem(this.USER_KEY, JSON.stringify(userData));
         this.updateUIForAuthStatus();
     },
     
-    // 儲存認證 Token
     setToken(token) {
         localStorage.setItem(this.STORAGE_KEY, token);
     },
     
-    // 登出
     logout() {
         localStorage.removeItem(this.STORAGE_KEY);
         localStorage.removeItem(this.USER_KEY);
@@ -50,10 +73,11 @@ const AuthManager = {
         window.location.href = 'index.html';
     },
     
-    // 檢查認證狀態
     checkAuthStatus() {
-        // 從 URL 取得 token（LINE Login callback）
+        // 從 URL 取得 token (這是後端 Workers 跳轉回來時帶的參數)
         const urlParams = new URLSearchParams(window.location.search);
+        // 注意：這裡假設後端會回傳 token 和 user 參數
+        // 如果還沒寫後端邏輯，這裡暫時不會觸發，但不影響跳轉去 LINE
         const token = urlParams.get('token');
         const userDataStr = urlParams.get('user');
         
@@ -62,8 +86,6 @@ const AuthManager = {
                 const userData = JSON.parse(decodeURIComponent(userDataStr));
                 this.setToken(token);
                 this.setUser(userData);
-                
-                // 清除 URL 參數
                 window.history.replaceState({}, document.title, window.location.pathname);
             } catch (error) {
                 console.error('Auth callback error:', error);
@@ -71,24 +93,19 @@ const AuthManager = {
         }
     },
     
-    // 更新 UI 顯示登入狀態
     updateUIForAuthStatus() {
         const isLoggedIn = this.isLoggedIn();
         const user = this.getCurrentUser();
         
-        // 更新導航列
         const authButtons = document.getElementById('authButtons');
-        const userInfo = document.getElementById('userInfo');
         
         if (authButtons) {
             if (isLoggedIn && user) {
                 authButtons.innerHTML = `
                     <div class="user-menu">
-                        <img src="${user.picture_url || '/images/default-avatar.png'}" alt="${user.display_name}" class="user-avatar">
-                        <span class="user-name">${user.display_name}</span>
-                        <button onclick="AuthManager.logout()" class="btn btn-secondary">
-                            <i class="fas fa-sign-out-alt"></i> 登出
-                        </button>
+                        <img src="${user.picture_url || 'https://via.placeholder.com/40'}" alt="${user.display_name}" class="user-avatar" style="width:40px;height:40px;border-radius:50%;">
+                        <span class="user-name" style="margin:0 10px;">${user.display_name}</span>
+                        <button onclick="AuthManager.logout()" class="btn btn-secondary">登出</button>
                     </div>
                 `;
             } else {
@@ -100,37 +117,32 @@ const AuthManager = {
             }
         }
         
-        // 更新「我的報名」連結顯示
         const myRegistrationsLink = document.getElementById('myRegistrationsLink');
         if (myRegistrationsLink) {
             myRegistrationsLink.style.display = isLoggedIn ? 'block' : 'none';
         }
     },
     
-    // LINE 登入
-   lineLogin() {
-    if (!LINE_CONFIG.validate()) {
-        alert('LINE 登入設定錯誤');
-        return;
-    }
+    // LINE 登入 (直接使用上方的 LINE_CONFIG)
+    lineLogin() {
+        const STATE = this.generateState();
+        localStorage.setItem('line_login_state', STATE);
+        
+        // 這裡直接呼叫，絕對不會找不到變數
+        const lineLoginUrl = LINE_CONFIG.getLoginUrl(STATE);
+        
+        console.log('準備跳轉至:', lineLoginUrl);
+        window.location.href = lineLoginUrl;
+    },
     
-    const STATE = this.generateState();
-    const lineLoginUrl = LINE_CONFIG.getLoginUrl(STATE);
-    window.location.href = lineLoginUrl;
-}
-
-    
-    // 產生隨機 state
     generateState() {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);
     },
     
-    // 要求登入（受保護頁面使用）
     requireLogin(redirectUrl = null) {
         if (!this.isLoggedIn()) {
             const returnUrl = redirectUrl || window.location.href;
             localStorage.setItem('return_url', returnUrl);
-            
             if (confirm('此功能需要登入，是否使用 LINE 登入？')) {
                 this.lineLogin();
             } else {
@@ -139,37 +151,6 @@ const AuthManager = {
             return false;
         }
         return true;
-    },
-    
-    // 取得認證 Token（用於 API 請求）
-    getAuthToken() {
-        return localStorage.getItem(this.STORAGE_KEY);
-    },
-    
-    // 帶 Token 的 fetch 請求
-    async authFetch(url, options = {}) {
-        const token = this.getAuthToken();
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-        
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
-        
-        // 如果 401 未授權，清除登入狀態
-        if (response.status === 401) {
-            this.logout();
-            throw new Error('未授權，請重新登入');
-        }
-        
-        return response;
     }
 };
 
@@ -180,7 +161,7 @@ if (typeof document !== 'undefined') {
     });
 }
 
-// 匯出（供其他模組使用）
+// 匯出
 if (typeof window !== 'undefined') {
     window.AuthManager = AuthManager;
 }

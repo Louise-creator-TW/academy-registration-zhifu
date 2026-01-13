@@ -6,6 +6,7 @@
 import { handleLineCallback } from './handlers/line-callback';
 import { handleRegistrationSubmit } from './handlers/registration';
 import { handleLineTagging } from './handlers/line-tagging';
+import { handleCoursesRequest } from './handlers/courses';
 
 export default {
   async fetch(request, env, ctx) {
@@ -18,15 +19,22 @@ export default {
     const path = url.pathname;
 
     try {
-      // 路由匹配
+      // 課程管理 API
+      if (path.startsWith('/api/courses')) {
+        return await handleCoursesRequest(request, env);
+      }
+      
+      // LINE Login 回調
       if (path === '/api/line-callback' && request.method === 'GET') {
         return await handleLineCallback(request, env);
       }
       
+      // 報名提交
       if (path === '/api/registration/submit' && request.method === 'POST') {
         return await handleRegistrationSubmit(request, env);
       }
       
+      // LINE 標籤
       if (path === '/api/line/tag' && request.method === 'POST') {
         return await handleLineTagging(request, env);
       }

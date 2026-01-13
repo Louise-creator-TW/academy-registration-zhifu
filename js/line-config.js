@@ -1,6 +1,6 @@
-/**
+**
  * LINE Login 配置檔
- * 統一管理 LINE 相關設定
+ * 統一管理LINE相關設定
  */
 
 const LINE_CONFIG = {

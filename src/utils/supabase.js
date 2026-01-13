@@ -6,17 +6,25 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * 建立 Supabase 客戶端
+ * 建立 Supabase 客戶端 (含防呆檢查)
  */
 function getSupabaseClient(env) {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+  // 1. 檢查變數是否存在
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    console.error('❌ Supabase 環境變數缺失！請檢查 Cloudflare Settings。');
+    throw new Error('Supabase configuration missing');
+  }
+
+  // 2. 防呆處理：自動去除前後空白 (Trim)
+  // 這是為了防止 "Error 1016" 再次發生
+  const cleanUrl = env.SUPABASE_URL.trim();
+  const cleanKey = env.SUPABASE_ANON_KEY.trim();
+
+  return createClient(cleanUrl, cleanKey);
 }
 
 /**
  * 取得用戶（透過 LINE User ID）
- * @param {string} lineUserId - LINE User ID
- * @param {Object} env - 環境變數
- * @returns {Promise<Object|null>} 用戶資料
  */
 export async function getUserByLineId(lineUserId, env) {
   const supabase = getSupabaseClient(env);
@@ -29,8 +37,7 @@ export async function getUserByLineId(lineUserId, env) {
   
   if (error) {
     if (error.code === 'PGRST116') {
-      // 找不到記錄
-      return null;
+      return null; // 找不到記錄
     }
     throw error;
   }
@@ -40,9 +47,6 @@ export async function getUserByLineId(lineUserId, env) {
 
 /**
  * 建立新用戶
- * @param {Object} userData - 用戶資料
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 用戶資料
  */
 export async function createUser(userData, env) {
   const supabase = getSupabaseClient(env);
@@ -62,10 +66,6 @@ export async function createUser(userData, env) {
 
 /**
  * 更新用戶資料
- * @param {string} userId - 用戶 ID
- * @param {Object} userData - 用戶資料
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 用戶資料
  */
 export async function updateUser(userId, userData, env) {
   const supabase = getSupabaseClient(env);
@@ -85,15 +85,11 @@ export async function updateUser(userId, userData, env) {
 }
 
 /**
- * 建立或更新用戶
- * @param {Object} userData - 用戶資料
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 用戶資料
+ * 建立或更新用戶 (登入核心)
  */
 export async function createOrUpdateUser(userData, env) {
   const supabase = getSupabaseClient(env);
 
-  // 檢查用戶是否已存在
   const { data: existingUser } = await supabase
     .from('users')
     .select('*')
@@ -101,7 +97,6 @@ export async function createOrUpdateUser(userData, env) {
     .single();
 
   if (existingUser) {
-    // 更新現有用戶
     const { data, error } = await supabase
       .from('users')
       .update({
@@ -121,7 +116,6 @@ export async function createOrUpdateUser(userData, env) {
     if (error) throw error;
     return data;
   } else {
-    // 建立新用戶
     const { data, error } = await supabase
       .from('users')
       .insert([{
@@ -138,9 +132,6 @@ export async function createOrUpdateUser(userData, env) {
 
 /**
  * 建立報名記錄
- * @param {Object} registrationData - 報名資料
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 報名記錄
  */
 export async function createRegistration(registrationData, env) {
   const supabase = getSupabaseClient(env);
@@ -161,26 +152,18 @@ export async function createRegistration(registrationData, env) {
 
 /**
  * 更新課程報名人數
- * @param {string} courseId - 課程 ID
- * @param {number} increment - 增加數量（預設 1）
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 課程資料
  */
 export async function updateCourseEnrollment(courseId, increment = 1, env) {
   const supabase = getSupabaseClient(env);
 
-  // 取得課程資料
   const { data: course } = await supabase
     .from('courses')
     .select('*')
     .eq('id', courseId)
     .single();
 
-  if (!course) {
-    throw new Error('課程不存在');
-  }
+  if (!course) throw new Error('課程不存在');
 
-  // 更新報名人數
   const newEnrolled = (course.current_enrolled || 0) + increment;
   const isFull = newEnrolled >= course.capacity;
 
@@ -201,9 +184,6 @@ export async function updateCourseEnrollment(courseId, increment = 1, env) {
 
 /**
  * 更新報名記錄的標籤狀態
- * @param {string} registrationId - 報名記錄 ID
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 報名記錄
  */
 export async function updateRegistrationTagged(registrationId, env) {
   const supabase = getSupabaseClient(env);
@@ -224,11 +204,6 @@ export async function updateRegistrationTagged(registrationId, env) {
 
 /**
  * 更新報名記錄的通知狀態
- * @param {string} registrationId - 報名記錄 ID
- * @param {boolean} success - 是否成功
- * @param {string} errorMessage - 錯誤訊息（如果失敗）
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 報名記錄
  */
 export async function updateRegistrationNotificationStatus(
   registrationId, 
@@ -260,11 +235,7 @@ export async function updateRegistrationNotificationStatus(
 }
 
 /**
- * 檢查用戶是否已報名課程
- * @param {string} userId - 用戶 ID
- * @param {string} courseId - 課程 ID
- * @param {Object} env - 環境變數
- * @returns {Promise<boolean>} 是否已報名
+ * 檢查重複報名
  */
 export async function checkDuplicateRegistration(userId, courseId, env) {
   const supabase = getSupabaseClient(env);
@@ -277,21 +248,14 @@ export async function checkDuplicateRegistration(userId, courseId, env) {
     .single();
   
   if (error) {
-    if (error.code === 'PGRST116') {
-      // 找不到記錄，表示未報名
-      return false;
-    }
+    if (error.code === 'PGRST116') return false;
     throw error;
   }
-  
   return data !== null;
 }
 
 /**
  * 取得用戶的所有報名記錄
- * @param {string} userId - 用戶 ID
- * @param {Object} env - 環境變數
- * @returns {Promise<Array>} 報名記錄陣列
  */
 export async function getUserRegistrations(userId, env) {
   const supabase = getSupabaseClient(env);
@@ -308,9 +272,6 @@ export async function getUserRegistrations(userId, env) {
 
 /**
  * 取得課程資料
- * @param {string} courseId - 課程 ID
- * @param {Object} env - 環境變數
- * @returns {Promise<Object>} 課程資料
  */
 export async function getCourse(courseId, env) {
   const supabase = getSupabaseClient(env);
@@ -327,8 +288,6 @@ export async function getCourse(courseId, env) {
 
 /**
  * 取得所有課程
- * @param {Object} env - 環境變數
- * @returns {Promise<Array>} 課程陣列
  */
 export async function getAllCourses(env) {
   const supabase = getSupabaseClient(env);
@@ -343,9 +302,73 @@ export async function getAllCourses(env) {
 }
 
 /**
- * 取得待通知的報名記錄（通知失敗的）
- * @param {Object} env - 環境變數
- * @returns {Promise<Array>} 報名記錄陣列
+ * 建立新課程 (這是您原本缺少的！)
+ */
+export async function createCourse(courseData, env) {
+  const supabase = getSupabaseClient(env);
+  
+  // 移除 id 欄位（讓資料庫自動產生）
+  const { id, ...dataWithoutId } = courseData;
+  
+  console.log('📝 建立課程，資料:', dataWithoutId);
+  
+  const { data, error } = await supabase
+    .from('courses')
+    .insert([{
+      ...dataWithoutId,  // 不包含 id
+      current_enrolled: dataWithoutId.current_enrolled || 0,
+      is_full: dataWithoutId.is_full || false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('❌ 建立課程失敗:', error);
+    throw error;
+  }
+  
+  console.log('✅ 課程已建立:', data);
+  return data;
+}
+
+/**
+ * 更新課程資料 (這是您原本缺少的！)
+ */
+export async function updateCourse(courseId, courseData, env) {
+  const supabase = getSupabaseClient(env);
+  
+  const { data, error } = await supabase
+    .from('courses')
+    .update({
+      ...courseData,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', courseId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * 刪除課程 (這是您原本缺少的！)
+ */
+export async function deleteCourse(courseId, env) {
+  const supabase = getSupabaseClient(env);
+  
+  const { error } = await supabase
+    .from('courses')
+    .delete()
+    .eq('id', courseId);
+  
+  if (error) throw error;
+}
+
+/**
+ * 取得待通知列表
  */
 export async function getPendingNotifications(env) {
   const supabase = getSupabaseClient(env);
