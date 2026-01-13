@@ -74,7 +74,8 @@ async function loadCourses() {
         console.log('📥 載入課程列表...');
         const result = await ApiHelper.get('api/courses', { limit: 100 });
         console.log('✅ 課程載入成功:', result);
-        courses = result.data || [];
+        // 如果回傳的是陣列就直接用，不然才去檢查 .data
+courses = Array.isArray(result) ? result : (result.data || []);
         displayCourses();
     } catch (error) {
         console.error('載入課程失敗:', error);
@@ -339,23 +340,22 @@ function showAlert(message, type = 'info') {
         setTimeout(() => alert.remove(), 300);
     }, 3000);
 }
-// === 事件監聽綁定區 ===
-// 確保 HTML 載入完成後才執行綁定，避免找不到元素報錯
-// === 將這段代碼貼到 js/registration.js 最下方 ===
 
+// === 事件監聽綁定區 ===
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM載入完成，開始綁定事件...');
 
     // 1. 綁定「右上角 X」關閉按鈕
     const closeSpan = document.querySelector('.close');
     if (closeSpan) {
-        closeSpan.addEventListener('click', closeRegistrationModal);
+        closeSpan.addEventListener('click', closeModal);
     }
 
-    // 2. 綁定「取消」按鈕 (我有在 HTML 加了 class="cancel-btn" 方便選取，或者用 .btn-secondary)
+    // 2. 綁定「取消」按鈕
+    // 注意：這裡變數名稱改成 cancelBtnSecondary 避免跟上面衝突，或者單純只寫這一次
     const cancelBtn = document.querySelector('.btn-secondary');
     if (cancelBtn) {
-        cancelBtn.addEventListener('click', closeRegistrationModal);
+        cancelBtn.addEventListener('click', closeModal);
     }
 
     // 3. 綁定「繳費方式」切換
