@@ -150,7 +150,7 @@ function displayCourses() {
 
 // 開啟報名表單
 async function openRegistrationForm(courseId) {
-    // 檢查是否登入
+    // 1. 檢查是否登入
     if (typeof AuthManager !== 'undefined' && !AuthManager.isLoggedIn()) {
         if (confirm('報名課程需要先登入，是否使用 LINE 登入？')) {
             AuthManager.lineLogin();
@@ -161,18 +161,22 @@ async function openRegistrationForm(courseId) {
     selectedCourse = courses.find(c => c.id === courseId);
     if (!selectedCourse) return;
     
-    // 檢查是否已報名過此課程（僅在非代理報名時檢查）
+    // 2. 檢查是否已報名過
     const user = AuthManager.getCurrentUser();
     if (user) {
         try {
-            const checkResponse = await fetch(`tables/registrations?limit=1000`);
-            const checkResult = await checkResponse.json();
+            // ✅【修正點 1】改用 ApiHelper，且路徑改為 'api/registrations' (配合 Genspark 建議)
+            // 這樣才能正確對應到後端的 Worker 路徑，不會出現 404
+            const checkResult = await ApiHelper.get('api/registrations', { limit: 1000 });
             
+            // 確保資料格式正確
+            const registrations = Array.isArray(checkResult) ? checkResult : (checkResult.data || []);
+
             // 只檢查「非代理報名」的記錄
-            const userNonProxyRegistrations = checkResult.data.filter(r => 
+            const userNonProxyRegistrations = registrations.filter(r => 
                 r.line_user_id === user.line_user_id && 
                 r.course_id === courseId &&
-                r.is_proxy_registration === false  // 只檢查非代理報名
+                r.is_proxy_registration === false
             );
             
             if (userNonProxyRegistrations.length > 0) {
@@ -180,33 +184,56 @@ async function openRegistrationForm(courseId) {
                 return;
             }
         } catch (error) {
-            console.error('檢查重複報名失敗:', error);
+            console.error('檢查重複報名失敗 (API路徑或網絡錯誤):', error);
+            // 這裡不阻擋流程，讓使用者繼續填寫
         }
     }
     
-    // 填入課程資訊
-    document.getElementById('courseId').value = selectedCourse.id;
-    document.getElementById('courseName').value = selectedCourse.name;
-    document.getElementById('displayCourseName').value = selectedCourse.name;
+    // 3. 填入課程資訊 (加入安全檢查，防止找不到元素報錯)
+    const elCourseId = document.getElementById('courseId');
+    const elCourseName = document.getElementById('courseName');
+    const elDisplayCourseName = document.getElementById('displayCourseName');
+
+    if(elCourseId) elCourseId.value = selectedCourse.id;
+    if(elCourseName) elCourseName.value = selectedCourse.name;
+    if(elDisplayCourseName) elDisplayCourseName.value = selectedCourse.name;
     
-    // 重置表單
-    document.getElementById('registrationForm').reset();
-    document.getElementById('courseId').value = selectedCourse.id;
-    document.getElementById('courseName').value = selectedCourse.name;
-    document.getElementById('displayCourseName').value = selectedCourse.name;
+    // 4. 重置表單
+    try {
+        const form = document.getElementById('registrationForm');
+        if (form) form.reset();
+        
+        // 重設隱藏欄位值
+        if(elCourseId) elCourseId.value = selectedCourse.id;
+        if(elCourseName) elCourseName.value = selectedCourse.name;
+        if(elDisplayCourseName) elDisplayCourseName.value = selectedCourse.name;
+    } catch(e) { console.error('重置表單失敗', e); }
     
-    // 重置代理報名選項和提示
-    document.getElementById('isProxyRegistration').checked = false;
-    document.getElementById('proxyRegistrationInfo').style.display = 'none';
+    // 重置代理報名選項
+    const elIsProxy = document.getElementById('isProxyRegistration');
+    const elProxyInfo = document.getElementById('proxyRegistrationInfo');
+    if(elIsProxy) elIsProxy.checked = false;
+    if(elProxyInfo) elProxyInfo.style.display = 'none';
     
-    // 如果用戶已登入，自動填入手機號碼
+    // 5. 自動填入手機號碼
+    // ✅【修正點 2】加入 if (mobileInput) 檢查，完美解決 "Cannot set properties of null" 錯誤
     if (user && user.mobile) {
-        document.getElementById('mobile').value = user.mobile;
+        const mobileInput = document.getElementById('mobile');
+        if (mobileInput) {
+            mobileInput.value = user.mobile;
+        } else {
+            console.warn('⚠️ 警告：HTML 中找不到 id="mobile" 的欄位，無法自動填入手機');
+        }
     }
     
-    // 顯示 Modal
-    document.getElementById('registrationModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
+    // 6. 顯示 Modal
+    const modal = document.getElementById('registrationModal');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    } else {
+        console.error('❌ 嚴重錯誤：找不到 id="registrationModal" 的視窗元素');
+    }
 }
 
 // 關閉 Modal
