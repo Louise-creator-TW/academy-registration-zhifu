@@ -6,8 +6,27 @@
     <title>課程報名 - 致福益人學苑</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    
-    </head>
+    <style>
+        /* 補上單選按鈕的簡單樣式，避免跑版 */
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            height: 40px; /* 配合 input 高度 */
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            margin: 0;
+            cursor: pointer;
+        }
+        .radio-label input {
+            margin-right: 5px;
+            width: auto;
+        }
+    </style>
+</head>
 <body>
     <header>
         <div class="header-content">
@@ -42,35 +61,37 @@
             <span class="close">&times;</span>
             
             <h3>課程報名表</h3>
-            <div id="selectedCourseInfo"></div>
             
             <form id="registrationForm">
                 <input type="hidden" id="courseId" name="course_id">
                 <input type="hidden" id="courseName" name="course_name">
                 
+                <div class="form-group">
+                    <label>報名課程</label>
+                    <input type="text" id="displayCourseName" class="form-control" disabled style="background-color: #f0f0f0; font-weight: bold;">
+                </div>
+                
                 <div class="form-section">
                     <h4>個人資訊</h4>
                     
                     <div class="form-group">
-                        <label for="studentName">姓名 *</label>
-                        <input type="text" id="studentName" name="name" required>
+                        <label for="name">姓名 <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" required placeholder="請輸入真實姓名">
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="gender">性別 *</label>
-                            <select id="gender" name="gender" required>
-                                <option value="">請選擇</option>
-                                <option value="男">男</option>
-                                <option value="女">女</option>
-                                <option value="其他">其他</option>
-                            </select>
+                            <label>性別 <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-label"><input type="radio" name="gender" value="男" required> 男</label>
+                                <label class="radio-label"><input type="radio" name="gender" value="女"> 女</label>
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="ageRange">年齡區段 *</label>
+                            <label for="ageRange">年齡區段 <span class="required">*</span></label>
                             <select id="ageRange" name="age_range" required>
-                                <option value="">請選擇</option>
+                                <option value="" disabled selected>請選擇</option>
                                 <option value="18-30">18-30歲</option>
                                 <option value="31-40">31-40歲</option>
                                 <option value="41-50">41-50歲</option>
@@ -80,10 +101,23 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="religion">宗教信仰 <span class="required">*</span></label>
+                        <select id="religion" name="religion" required>
+                            <option value="" disabled selected>請選擇</option>
+                            <option value="基督教">基督教</option>
+                            <option value="天主教">天主教</option>
+                            <option value="佛教">佛教</option>
+                            <option value="道教">道教</option>
+                            <option value="無信仰">無信仰</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
                     
                     <div class="form-group">
-                        <label for="mobile">手機號碼 *</label>
-                        <input type="tel" id="mobile" name="mobile" pattern="[0-9]{10}" required>
+                        <label for="mobile">手機號碼 <span class="required">*</span></label>
+                        <input type="tel" id="mobile" name="mobile" pattern="[0-9]{10}" required placeholder="09xxxxxxxx">
                         <small>請輸入10碼手機號碼</small>
                     </div>
                 </div>
@@ -92,19 +126,18 @@
                     <h4>緊急聯絡人</h4>
                     
                     <div class="form-group">
-                        <label for="emergencyName">姓名 *</label>
-                        <input type="text" id="emergencyName" name="emergency_contact_name" required>
+                        <label for="emergencyContact">姓名 <span class="required">*</span></label>
+                        <input type="text" id="emergencyContact" name="emergency_contact_name" required>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="emergencyPhone">電話 *</label>
+                            <label for="emergencyPhone">電話 <span class="required">*</span></label>
                             <input type="tel" id="emergencyPhone" name="emergency_contact_phone" required>
                         </div>
-                        
                         <div class="form-group">
-                            <label for="emergencyRelation">關係 *</label>
-                            <input type="text" id="emergencyRelation" name="emergency_contact_relation" placeholder="例：配偶、子女、朋友" required>
+                            <label for="emergencyRelation">關係</label>
+                            <input type="text" id="emergencyRelation" name="emergency_contact_relation" placeholder="例：配偶">
                         </div>
                     </div>
                 </div>
@@ -113,17 +146,17 @@
                     <h4>繳費資訊</h4>
                     
                     <div class="form-group">
-                        <label for="paymentMethod">繳費方式 *</label>
+                        <label for="paymentMethod">繳費方式 <span class="required">*</span></label>
                         <select id="paymentMethod" name="payment_method" required>
-                            <option value="">請選擇</option>
+                            <option value="" disabled selected>請選擇</option>
                             <option value="轉帳繳費">轉帳繳費</option>
                             <option value="現場繳費">現場繳費</option>
                         </select>
                     </div>
                     
                     <div id="accountFieldGroup" class="form-group" style="display: none;">
-                        <label for="accountLast5">轉帳帳號後5碼 *</label>
-                        <input type="text" id="accountLast5" name="account_last5" pattern="[0-9]{5}" maxlength="5">
+                        <label for="accountLast5">轉帳帳號後5碼 <span class="required">*</span></label>
+                        <input type="text" id="accountLast5" name="account_last5" pattern="[0-9]{5}" maxlength="5" placeholder="請輸入末5碼">
                         <small>請填寫您轉帳帳戶的後5碼，以便核對</small>
                     </div>
                     
@@ -135,11 +168,11 @@
                 
                 <div class="form-section">
                     <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="isProxyRegistration" name="is_proxy">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="isProxyRegistration" name="is_proxy" style="width: auto; margin: 0;">
                             <span>代理他人報名</span>
                         </label>
-                        <small>勾選此項表示您是協助他人報名</small>
+                        <small style="display: block; margin-top: 5px;">勾選此項表示您是協助他人報名</small>
                     </div>
                     
                     <div id="proxyRegistrationInfo" class="proxy-info" style="display: none;">
@@ -149,7 +182,6 @@
                             <ul>
                                 <li>報名成功後，LINE 通知會發送給<strong>您（代理人）</strong></li>
                                 <li>請記得將課程資訊轉達給實際參加課程的學員</li>
-                                <li>繳費資訊會顯示在 LINE 通知中</li>
                             </ul>
                         </div>
                     </div>
@@ -158,12 +190,12 @@
                 <div class="form-section">
                     <div class="form-group">
                         <label for="notes">備註</label>
-                        <textarea id="notes" name="notes" rows="3" placeholder="如有特殊需求或想告知我們的事項，請填寫於此"></textarea>
+                        <textarea id="notes" name="notes" rows="3" placeholder="如有特殊需求請填寫"></textarea>
                     </div>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary cancel-btn">取消</button>
+                    <button type="button" class="btn btn-secondary cancel-btn" onclick="closeModal()">取消</button>
                     <button type="submit" class="btn btn-primary">確認報名</button>
                 </div>
             </form>
@@ -177,9 +209,9 @@
         <p>地址: 台北市中正區懷寧街</p>
         <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
     </footer>
+
 <script src="js/api-config.js?t=2026011701"></script>
 <script src="js/auth.js?t=2026011701"></script>
-
 <script type="module" src="js/registration.js?t=2026011701"></script>
 
 </body>
