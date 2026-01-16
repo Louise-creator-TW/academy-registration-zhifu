@@ -32,25 +32,35 @@ function displayUserInfo() {
     }
 }
 
-// 載入我的報名記錄
-async function loadMyRegistrations() {
+async function loadRegistrations() {
+    const user = AuthManager.getCurrentUser();
+    if (!user) {
+        // 尚未登入的處理
+        document.getElementById('registrationsList').innerHTML = 
+            '<div class="no-data">請先登入以查看報名記錄</div>';
+        return;
+    }
+
     try {
-        console.log('📥 載入報名記錄...');
+        console.log('正在載入報名紀錄...');
+        
+        // ✅ 修正：使用 created_at 排序，確保路徑正確
         const result = await ApiHelper.get('api/registrations', { 
-            limit: 1000, 
-            sort: '-registration_date' 
+            limit: 100, 
+            sort: '-created_at' // 讓最新的報名排在最上面
         });
-        console.log('✅ 報名記錄載入成功:', result);
         
-        // 篩選出當前用戶的報名記錄
-        myRegistrations = result.data.filter(r => 
-            r.line_user_id === currentUser.line_user_id
-        );
-        
-        displayRegistrations();
+        // 過濾出屬於當前使用者的報名
+        // (雖然 Worker 可能已經過濾了，但前端再保險一次)
+        const allRecords = Array.isArray(result) ? result : (result.data || []);
+        const myRecords = allRecords.filter(r => r.line_user_id === user.line_user_id);
+
+        displayRegistrations(myRecords); // 呼叫顯示函式
+
     } catch (error) {
-        console.error('載入報名記錄失敗:', error);
-        showAlert('無法載入報名記錄，請稍後再試', 'error');
+        console.error('載入失敗:', error);
+        document.getElementById('registrationsList').innerHTML = 
+            `<div class="error-message">無法載入記錄: ${error.message}</div>`;
     }
 }
 

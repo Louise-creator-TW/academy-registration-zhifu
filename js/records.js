@@ -5,34 +5,48 @@ let filteredRecords = [];
 let courses = [];
 let deletingRecord = null;
 
-// 頁面載入時執行
-document.addEventListener('DOMContentLoaded', function() {
+
+// 確保在頁面載入時執行
+document.addEventListener('DOMContentLoaded', () => {
+    // 檢查管理員權限 (如果有的話)
+    if (typeof AuthManager !== 'undefined' && !AuthManager.isAdmin()) {
+        // alert('權限不足'); 
+        // window.location.href = 'index.html';
+        // return;
+    }
     loadData();
 });
 
-// 載入所有資料
 async function loadData() {
     try {
-        // 同時載入課程和報名記錄
-        const [coursesResponse, recordsResponse] = await Promise.all([
-            fetch('tables/courses?limit=100'),
-            fetch('tables/registrations?limit=1000&sort=-registration_date')
+        const loadingEl = document.querySelector('.loading');
+        if (loadingEl) loadingEl.style.display = 'block';
+
+        // ✅ 修正：改用 ApiHelper 呼叫正確的 API 路徑
+        // 舊的 'tables/...' 路徑已棄用
+        const [coursesResult, recordsResult] = await Promise.all([
+            ApiHelper.get('api/courses', { limit: 100 }),
+            ApiHelper.get('api/registrations', { limit: 1000, sort: '-created_at' })
         ]);
+
+        // 處理數據結構 (有些 API 回傳直接是陣列，有些是 { data: [] })
+        const courses = Array.isArray(coursesResult) ? coursesResult : (coursesResult.data || []);
+        const records = Array.isArray(recordsResult) ? recordsResult : (recordsResult.data || []);
+
+        console.log('取得資料:', { courses, records });
         
-        const coursesResult = await coursesResponse.json();
-        const recordsResult = await recordsResponse.json();
-        
-        courses = coursesResult.data;
-        allRecords = recordsResult.data;
-        filteredRecords = allRecords;
-        
-        populateCourseFilter();
-        displayRecords();
-        updateTotalCount();
-        
+        // 渲染表格 (假設您原本就有 renderTables 這個函式)
+        renderTables(courses, records);
+
     } catch (error) {
         console.error('載入資料失敗:', error);
-        showAlert('無法載入資料，請稍後再試', 'error');
+        const container = document.getElementById('recordsContainer');
+        if (container) {
+            container.innerHTML = `<div class="error-message">載入失敗: ${error.message}</div>`;
+        }
+    } finally {
+        const loadingEl = document.querySelector('.loading');
+        if (loadingEl) loadingEl.style.display = 'none';
     }
 }
 

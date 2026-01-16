@@ -18,15 +18,18 @@
     </header>
 
     <nav>
-        <ul>
-            <li><a href="index.html" class="active">首頁</a></li>
-            <li><a href="registration.html">我要報名</a></li>
-            <li><a href="my-registrations.html" id="myRegistrationsLink" style="display:none;">我的報名</a></li>
-            <li><a href="admin.html">課程管理</a></li>
-            <li><a href="records.html">報名記錄</a></li>
-        </ul>
-        <div id="authButtons" class="auth-buttons"></div>
-    </nav>
+    <a href="index.html" class="active">首頁</a>
+    <a href="registration.html">課程報名</a>
+    
+    <a href="my-registrations.html" id="myRegistrationsLink" style="display: none;">我的報名</a>
+    <a href="records.html">報名記錄</a> <a href="#" id="loginBtn" onclick="AuthManager.lineLogin(); return false;">
+        <i class="fab fa-line"></i> LINE 登入
+    </a>
+    
+    <a href="#" id="logoutBtn" onclick="AuthManager.logout(); return false;" style="display: none;">
+        登出
+    </a>
+</nav>
 
     <div class="container">
         <div class="page-title">
@@ -110,5 +113,7 @@
         <p>地址: 台北市中正區懷寧街</p>
         <p>&copy; 2026 致福益人學苑懷寧浸信會分校。版權所有。</p>
     </footer>
+    <script src="js/api-config.js?t=2026011705"></script>
+<script src="js/auth.js?t=2026011705"></script>
 </body>
 </html>
