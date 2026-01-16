@@ -1,12 +1,17 @@
+/**
+ * js/auth.js
+ * LINE 登入與認證管理 (修正版)
+ * 版本：v2026011705
+ */
+
 // ==========================================
-// 1. LINE 設定區域 (直接合併在這裡，保證讀得到)
+// 1. LINE 設定區域
 // ==========================================
 const LINE_CONFIG = {
     // ⚠️ 請確認這是您的 Channel ID
     CHANNEL_ID: '2008825862',  
     
-    // ⚠️ (關鍵修改) 請填入您的 Workers 後端網址
-    // 這會把 LINE 帶來的 "Code" 交給後端處理，後端處理完會再把您帶回首頁並附上 "Token"
+    // ⚠️ Workers 後端回調網址
     getCallbackUrl() {
         return 'https://academy-registration-api.zhifu-acadamy-bot-2026.workers.dev/api/line-callback';
     },
@@ -35,49 +40,57 @@ const AuthManager = {
     STORAGE_KEY: 'cf_academy_auth',
     USER_KEY: 'cf_academy_user',
     
+    // 初始化
     init() {
-        this.checkAuthStatus();
-        this.updateUIForAuthStatus();
+        this.checkAuthStatus(); // 檢查網址是否有帶 token (登入回調)
+        this.updateUI();        // 更新介面顯示
     },
     
+    // 判斷是否已登入
     isLoggedIn() {
         const token = localStorage.getItem(this.STORAGE_KEY);
         const user = this.getCurrentUser();
         return !!(token && user);
     },
     
+    // 取得當前使用者資料
     getCurrentUser() {
         const userStr = localStorage.getItem(this.USER_KEY);
         if (!userStr) return null;
         try {
             return JSON.parse(userStr);
         } catch (error) {
-            console.error('Parse user data error:', error);
+            console.error('解析使用者資料失敗:', error);
             return null;
         }
     },
     
+    // 儲存使用者資料
     setUser(userData) {
         localStorage.setItem(this.USER_KEY, JSON.stringify(userData));
-        this.updateUIForAuthStatus();
+        this.updateUI();
     },
     
+    // 儲存 Token
     setToken(token) {
         localStorage.setItem(this.STORAGE_KEY, token);
     },
     
+    // 登出
     logout() {
-        localStorage.removeItem(this.STORAGE_KEY);
-        localStorage.removeItem(this.USER_KEY);
-        this.updateUIForAuthStatus();
-        window.location.href = 'index.html';
+        if(confirm('確定要登出嗎？')) {
+            localStorage.removeItem(this.STORAGE_KEY);
+            localStorage.removeItem(this.USER_KEY);
+            this.updateUI();
+            
+            // 登出後導回首頁
+            window.location.href = 'index.html';
+        }
     },
     
+    // 檢查網址參數 (處理 LINE Login 回調)
     checkAuthStatus() {
-        // 從 URL 取得 token (這是後端 Workers 跳轉回來時帶的參數)
         const urlParams = new URLSearchParams(window.location.search);
-        // 注意：這裡假設後端會回傳 token 和 user 參數
-        // 如果還沒寫後端邏輯，這裡暫時不會觸發，但不影響跳轉去 LINE
         const token = urlParams.get('token');
         const userDataStr = urlParams.get('user');
         
@@ -85,83 +98,116 @@ const AuthManager = {
             try {
                 const userData = JSON.parse(decodeURIComponent(userDataStr));
                 this.setToken(token);
-                this.setUser(userData);
+                this.setUser(userData); // 這裡會自動觸發 updateUI
+                
+                // 清除網址列的參數，讓網址變乾淨
                 window.history.replaceState({}, document.title, window.location.pathname);
+                console.log('✅ 登入成功:', userData.display_name);
             } catch (error) {
-                console.error('Auth callback error:', error);
+                console.error('登入回調處理失敗:', error);
             }
         }
     },
     
-    updateUIForAuthStatus() {
+    // ✅ 核心 UI 更新邏輯 (同時支援首頁與內頁)
+    updateUI() {
         const isLoggedIn = this.isLoggedIn();
         const user = this.getCurrentUser();
         
-        const authButtons = document.getElementById('authButtons');
+        // ------------------------------------------------
+        // 1. 處理首頁導覽列 (Navbar) 的按鈕切換
+        // ------------------------------------------------
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const myRegLink = document.getElementById('myRegistrationsLink');
         
+        if (isLoggedIn) {
+            // 登入狀態：隱藏登入鈕，顯示登出鈕和我的報名
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            if (myRegLink) myRegLink.style.display = 'inline-block';
+        } else {
+            // 未登入狀態：顯示登入鈕，隱藏登出鈕和我的報名
+            if (loginBtn) loginBtn.style.display = 'inline-block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            if (myRegLink) myRegLink.style.display = 'none';
+        }
+
+        // ------------------------------------------------
+        // 2. 處理內頁的 authButtons 容器 (如果有的話)
+        // (例如 registration.html 右上角顯示頭像)
+        // ------------------------------------------------
+        const authButtons = document.getElementById('authButtons');
         if (authButtons) {
             if (isLoggedIn && user) {
+                // 優先使用 camelCase (後端常見格式)，如果沒有則嘗試 snake_case
+                const picUrl = user.pictureUrl || user.picture_url || 'https://via.placeholder.com/40';
+                const name = user.displayName || user.display_name || '學員';
+
                 authButtons.innerHTML = `
-                    <div class="user-menu">
-                        <img src="${user.picture_url || 'https://via.placeholder.com/40'}" alt="${user.display_name}" class="user-avatar" style="width:40px;height:40px;border-radius:50%;">
-                        <span class="user-name" style="margin:0 10px;">${user.display_name}</span>
-                        <button onclick="AuthManager.logout()" class="btn btn-secondary">登出</button>
+                    <div class="user-menu" style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${picUrl}" alt="${name}" class="user-avatar" style="width:32px;height:32px;border-radius:50%;">
+                        <span class="user-name">${name}</span>
+                        <button onclick="AuthManager.logout()" class="btn btn-sm btn-outline-secondary" style="margin-left:5px; padding: 2px 8px; font-size: 0.8rem;">登出</button>
                     </div>
                 `;
             } else {
+                // 如果在內頁但沒登入，顯示登入按鈕
                 authButtons.innerHTML = `
-                    <button onclick="AuthManager.lineLogin()" class="btn btn-primary">
+                    <button onclick="AuthManager.lineLogin()" class="btn btn-primary btn-sm">
                         <i class="fab fa-line"></i> LINE 登入
                     </button>
                 `;
             }
         }
-        
-        const myRegistrationsLink = document.getElementById('myRegistrationsLink');
-        if (myRegistrationsLink) {
-            myRegistrationsLink.style.display = isLoggedIn ? 'block' : 'none';
-        }
     },
     
-    // LINE 登入 (直接使用上方的 LINE_CONFIG)
+    // LINE 登入觸發點
     lineLogin() {
         const STATE = this.generateState();
         localStorage.setItem('line_login_state', STATE);
         
-        // 這裡直接呼叫，絕對不會找不到變數
         const lineLoginUrl = LINE_CONFIG.getLoginUrl(STATE);
-        
-        console.log('準備跳轉至:', lineLoginUrl);
+        console.log('準備跳轉至 LINE Login:', lineLoginUrl);
         window.location.href = lineLoginUrl;
     },
     
+    // 產生隨機 State 防止 CSRF
     generateState() {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);
     },
     
+    // 強制登入檢查 (用於保護特定頁面)
     requireLogin(redirectUrl = null) {
         if (!this.isLoggedIn()) {
             const returnUrl = redirectUrl || window.location.href;
             localStorage.setItem('return_url', returnUrl);
-            if (confirm('此功能需要登入，是否使用 LINE 登入？')) {
+            
+            // 這裡不使用 confirm，直接跳轉，體驗較好
+            // 或者您可以保留 confirm
+            if (confirm('此功能需要登入，是否前往 LINE 登入？')) {
                 this.lineLogin();
             } else {
+                // 如果使用者按取消，導回首頁
                 window.location.href = 'index.html';
             }
             return false;
         }
         return true;
+    },
+    
+    // 用戶是否有管理員權限 (預留擴充)
+    isAdmin() {
+        const user = this.getCurrentUser();
+        // 這裡可以改成檢查 user.role === 'admin' 或是檢查特定的 Line User ID
+        return user && (user.role === 'admin' || user.isAdmin === true);
     }
 };
 
 // 頁面載入時初始化
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', function() {
-        AuthManager.init();
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+    AuthManager.init();
+});
 
-// 匯出
-if (typeof window !== 'undefined') {
-    window.AuthManager = AuthManager;
-}
+// ✅ 修正匯出名稱 (之前您原本的代碼這裡拼錯了)
+window.AuthManager = AuthManager;
