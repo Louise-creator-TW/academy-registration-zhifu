@@ -818,3 +818,32 @@ footer p {
     display: flex;
     justify-content: flex-end;
 }
+
+/* =========================================
+   修正手機版導覽列樣式 (建議加上)
+   ========================================= */
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    nav ul {
+        flex-wrap: wrap; /* 讓選單可以換行 */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    nav a {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.95rem; /* 字稍微小一點 */
+        border-bottom: none; /* 手機版不顯示底線 */
+        border-radius: 4px; /* 改成圓角按鈕狀 */
+    }
+
+    /* 在手機版把「我的報名」和「登出」醒目化 */
+    nav a.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+}

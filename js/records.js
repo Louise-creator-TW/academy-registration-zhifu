@@ -300,25 +300,43 @@ async function confirmDelete() {
     }
 }
 
-// 匯出 CSV (一般版)
+// 匯出完整資料為 CSV (包含宗教、帳號後5碼等所有欄位)
 function exportData() {
     if (filteredRecords.length === 0) {
         showAlert('目前沒有資料可以匯出', 'error');
         return;
     }
     
+    // 1. 定義完整的 CSV 標題 (Headers)
     const headers = [
-        '報名日期', '課程名稱', '姓名', '性別', '年齡區段',
-        '手機號碼', '緊急聯絡人', '緊急聯絡電話', '宗教信仰',
-        '繳費方式', '帳號後5碼', '報名類型', '備註'
+        '報名日期',
+        '課程名稱',
+        '學員姓名',
+        '性別',
+        '年齡區段',
+        '手機號碼',
+        '宗教信仰',       // ✅ 用戶指定：religion
+        '緊急聯絡人',
+        '緊急聯絡電話',
+        '繳費方式',
+        '帳號後5碼',      // ✅ 用戶指定：account_last5
+        '繳費狀態',       // ✨ 加碼：讓您知道誰已繳費
+        '備註',
+        '報名類型',
+        'LINE User ID'   // ✨ 加碼：方便工程師查修
     ];
     
+    // 2. 轉換資料內容 (Rows)
     const rows = filteredRecords.map(record => {
+        // 日期格式化 (相容性處理)
         const dateStr = record.registration_date || record.created_at;
         const date = dateStr ? new Date(dateStr) : new Date();
         const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+        
+        // 報名類型文字轉換
         const registrationType = record.is_proxy_registration ? '代理報名' : '一般報名';
         
+        // 回傳欄位陣列 (順序必須跟 headers 一樣)
         return [
             formattedDate,
             record.course_name,
@@ -326,18 +344,26 @@ function exportData() {
             record.gender,
             record.age_range,
             record.mobile,
+            record.religion,          // ✅ 對應 headers
             record.emergency_contact,
             record.emergency_phone,
-            record.religion,
             record.payment_method,
-            record.account_last5 || '',
+            record.account_last5,     // ✅ 對應 headers
+            record.payment_status,
+            record.notes,
             registrationType,
-            record.notes || ''
-        ].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',');
+            record.line_user_id
+        ].map(field => {
+            // CSV 格式處理：將內容轉字串，並處理內容中可能出現的雙引號
+            return `"${String(field || '').replace(/"/g, '""')}"`;
+        }).join(',');
     });
     
+    // 3. 組合 CSV 內容 (加上 \uFEFF 是為了讓 Excel 正確識別中文編碼)
     const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-    downloadCSV(csv, `報名記錄_${new Date().toISOString().split('T')[0]}.csv`);
+    
+    // 4. 下載檔案
+    downloadCSV(csv, `完整報名資料_${new Date().toISOString().split('T')[0]}.csv`);
 }
 
 // 匯出 CSV (季度名單版)

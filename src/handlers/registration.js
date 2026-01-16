@@ -1,6 +1,6 @@
 /**
  * Registration Submit Handler
- * 處理報名提交 - 包含標籤與 LINE 推播功能
+ * 處理報名提交 - 修正版 (已修復 user_id 與 line_user_id 取值錯誤)
  */
 
 import { verifyJWT } from '../utils/auth';
@@ -35,10 +35,17 @@ export async function handleRegistrationSubmit(request, env, ctx) {
       );
     }
 
+    // Debug: 確認抓到的 user 資料 (部署後可查看 logs)
+    console.log(`👤 處理報名用戶: ${user.display_name} | ID: ${user.line_user_id}`);
+
     // 4. 準備報名資料
     const registrationData = {
-      user_id: user.userId,
-      line_user_id: user.lineUserId,
+      // ✅ [修正 1] 使用 user.id (對應 JWT payload 的標準欄位)
+      user_id: user.id, 
+      
+      // ✅ [修正 2] 使用 user.line_user_id (修正駝峰式命名錯誤)
+      line_user_id: user.line_user_id, 
+      
       course_id: formData.course_id,
       course_name: formData.course_name,
       name: formData.name,
@@ -55,7 +62,6 @@ export async function handleRegistrationSubmit(request, env, ctx) {
       is_proxy_registration: formData.is_proxy_registration || false,
       line_tagged: false,
       line_tag_name: `已報名-${formData.course_name}`
-      // ❌ 已移除 registration_date：讓資料庫 DEFAULT NOW() 自動處理，避免時區問題
     };
 
     // 5. 儲存報名資料
@@ -66,17 +72,17 @@ export async function handleRegistrationSubmit(request, env, ctx) {
     }
 
     // 6. 更新課程報名人數
-    // (注意：請確認 utils/supabase.js 裡的 updateCourseEnrollment 有更新 courses 表的 updated_at)
     await updateCourseEnrollment(formData.course_id, 1, env);
 
-    // 🔥 7. 關鍵步驟：打標籤 + 發送 LINE 通知
+    // 7. 關鍵步驟：打標籤 + 發送 LINE 通知
+    // ✅ [修正 3] 這裡也要傳入 user.line_user_id，確保通知發給正確的人
     if (ctx && ctx.waitUntil) {
       ctx.waitUntil(
-        handleLineNotificationAndTagging(registration, user.lineUserId, formData, env)
+        handleLineNotificationAndTagging(registration, user.line_user_id, formData, env)
           .catch(err => console.error('BG Task Error:', err))
       );
     } else {
-      handleLineNotificationAndTagging(registration, user.lineUserId, formData, env)
+      handleLineNotificationAndTagging(registration, user.line_user_id, formData, env)
         .catch(err => console.error('Task Error:', err));
     }
 
@@ -87,7 +93,6 @@ export async function handleRegistrationSubmit(request, env, ctx) {
       registration: {
         id: registration.id,
         course_name: registration.course_name,
-        // 回傳資料時，因為剛寫入，資料庫會回傳自動產生的 registration_date
         registration_date: registration.registration_date 
       }
     }, { status: 201 });
@@ -105,18 +110,15 @@ export async function handleRegistrationSubmit(request, env, ctx) {
   }
 }
 
-// ... handleLineNotificationAndTagging 函式保持不變 ...
-// (為了節省篇幅，下方省略，請保留原有的 handleLineNotificationAndTagging 代碼)
+/**
+ * 處理 LINE 通知與標籤 (背景任務)
+ */
 async function handleLineNotificationAndTagging(registration, lineUserId, formData, env) {
-    // ... 原本的代碼 ...
     try {
         // 步驟 1: 記錄標籤
-        // ...
         await recordUserTag(registration.id, lineUserId, registration.line_tag_name, env);
 
-        // 步驟 2: 建立卡片
-        // ...
-        // 注意：這裡顯示日期用 new Date() 是沒問題的，因為只是顯示給用戶看當天日期
+        // 步驟 2: 建立報名確認卡片
         const confirmationCard = createRegistrationConfirmationCard({
           studentName: formData.name,
           courseName: formData.course_name,
@@ -127,8 +129,9 @@ async function handleLineNotificationAndTagging(registration, lineUserId, formDa
           registrationDate: new Date().toLocaleDateString('zh-TW')
         });
         
-        // ... 其餘邏輯保持不變 ...
         const messages = [confirmationCard];
+
+        // 如果是轉帳繳費，附加繳費資訊卡片
         if (formData.payment_method === '轉帳繳費') {
             messages.push(createPaymentReminderCard({
                 bankName: env.BANK_NAME || '台灣銀行',
@@ -139,12 +142,15 @@ async function handleLineNotificationAndTagging(registration, lineUserId, formDa
             }));
         }
 
+        // 步驟 3: 發送訊息
         await sendPushMessage(lineUserId, messages, env);
+        
+        // 更新通知狀態為成功
         await updateRegistrationNotificationStatus(registration.id, true, null, env);
 
     } catch (error) {
         console.error('❌ LINE 通知處理錯誤:', error);
+        // 更新通知狀態為失敗
         await updateRegistrationNotificationStatus(registration.id, false, error.message, env);
-        // 這裡不 throw error，避免影響主流程的回傳結果
     }
 }
