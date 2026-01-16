@@ -1,307 +1,120 @@
-// 我的報名頁面 JavaScript
-
-let myRegistrations = [];
-let currentUser = null;
+/**
+ * js/my-registrations.js
+ * 我的報名頁面邏輯
+ */
 
 // 頁面載入時執行
-document.addEventListener('DOMContentLoaded', function() {
-    // 檢查登入狀態
-    if (!AuthManager.requireLogin()) {
-        return;
-    }
-    
-    currentUser = AuthManager.getCurrentUser();
-    if (currentUser) {
-        displayUserInfo();
-        loadMyRegistrations();
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    // 呼叫函式 (名稱必須與下方定義的一致)
+    loadMyRegistrations();
 });
 
-// 顯示用戶資訊
-function displayUserInfo() {
-    const userInfoCard = document.getElementById('userInfoCard');
-    const userAvatar = document.getElementById('userAvatar');
-    const userName = document.getElementById('userName');
-    const userMobile = document.getElementById('userMobile');
-    
-    if (currentUser) {
-        userInfoCard.style.display = 'block';
-        userAvatar.src = currentUser.picture_url || '/images/default-avatar.png';
-        userName.textContent = currentUser.display_name;
-        userMobile.textContent = currentUser.mobile ? `手機：${currentUser.mobile}` : '';
-    }
-}
-
-async function loadRegistrations() {
-    const user = AuthManager.getCurrentUser();
-    if (!user) {
-        // 尚未登入的處理
-        document.getElementById('registrationsList').innerHTML = 
-            '<div class="no-data">請先登入以查看報名記錄</div>';
+// 定義主函式：載入我的報名
+async function loadMyRegistrations() {
+    // 1. 檢查登入狀態
+    if (typeof AuthManager === 'undefined' || !AuthManager.isLoggedIn()) {
+        const container = document.getElementById('registrationsList');
+        if (container) {
+            container.innerHTML = `
+                <div class="no-data" style="text-align: center; padding: 3rem;">
+                    <p>請先登入以查看您的報名記錄</p>
+                    <button class="btn btn-primary" onclick="AuthManager.lineLogin()">LINE 登入</button>
+                </div>`;
+        }
         return;
     }
 
+    const user = AuthManager.getCurrentUser();
+    const container = document.getElementById('registrationsList');
+    
     try {
+        if (container) {
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> 載入資料中...</div>';
+        }
+
         console.log('正在載入報名紀錄...');
         
-        // ✅ 修正：使用 created_at 排序，確保路徑正確
+        // 2. 呼叫 API (使用正確的路徑與排序)
+        // 注意：這裡使用 created_at 排序，這是我們確定資料庫有的欄位
         const result = await ApiHelper.get('api/registrations', { 
             limit: 100, 
-            sort: '-created_at' // 讓最新的報名排在最上面
+            sort: '-created_at' 
         });
         
-        // 過濾出屬於當前使用者的報名
-        // (雖然 Worker 可能已經過濾了，但前端再保險一次)
+        // 3. 過濾出屬於當前使用者的資料
+        // (API 回傳可能是陣列或 {data: []})
         const allRecords = Array.isArray(result) ? result : (result.data || []);
+        
+        // 前端再次過濾 (雙重保險，確保只看到自己的)
         const myRecords = allRecords.filter(r => r.line_user_id === user.line_user_id);
 
-        displayRegistrations(myRecords); // 呼叫顯示函式
+        console.log('我的報名:', myRecords);
+
+        // 4. 顯示資料
+        displayRegistrations(myRecords);
 
     } catch (error) {
         console.error('載入失敗:', error);
-        document.getElementById('registrationsList').innerHTML = 
-            `<div class="error-message">無法載入記錄: ${error.message}</div>`;
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message" style="color: red; text-align: center; padding: 2rem;">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    無法載入記錄: ${error.message}
+                </div>`;
+        }
     }
 }
 
-// 顯示報名記錄
-function displayRegistrations() {
-    const container = document.getElementById('registrationsContainer');
-    
-    if (myRegistrations.length === 0) {
+// 顯示報名卡片
+function displayRegistrations(records) {
+    const container = document.getElementById('registrationsList');
+    if (!container) return;
+
+    if (records.length === 0) {
         container.innerHTML = `
-            <div style="text-align: center; padding: 3rem;">
-                <i class="fas fa-inbox" style="font-size: 4rem; color: #7f8c8d; margin-bottom: 1rem;"></i>
-                <h3 style="color: #7f8c8d; margin-bottom: 1rem;">目前沒有報名記錄</h3>
-                <p style="color: #95a5a6; margin-bottom: 2rem;">趕快去報名您喜歡的課程吧！</p>
-                <a href="registration.html" class="btn btn-primary">
-                    <i class="fas fa-clipboard-list"></i> 前往報名
-                </a>
-            </div>
-        `;
+            <div class="no-data" style="text-align: center; padding: 3rem; color: #666;">
+                <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 1rem; color: #ccc;"></i>
+                <p>您目前還沒有報名任何課程</p>
+                <a href="registration.html" class="btn btn-primary" style="margin-top: 10px;">前往報名課程</a>
+            </div>`;
         return;
     }
-    
-    container.innerHTML = `
-        <div class="registrations-list">
-            ${myRegistrations.map(reg => createRegistrationCard(reg)).join('')}
-        </div>
-    `;
-}
 
-// 建立報名卡片
-function createRegistrationCard(registration) {
-    const date = new Date(registration.registration_date);
-    const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-    
-    const paymentStatusClass = {
-        '未繳費': 'badge-warning',
-        '已繳費': 'badge-success',
-        '已確認': 'badge-success'
-    }[registration.payment_status] || 'badge-warning';
-    
-    return `
-        <div class="registration-card">
-            <div class="registration-card-header">
-                <h3>${registration.course_name}</h3>
-                <span class="badge ${paymentStatusClass}">
-                    ${registration.payment_status || '未繳費'}
-                </span>
-            </div>
-            <div class="registration-card-body">
-                <div class="registration-info-grid">
-                    <div class="registration-info-item">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>報名日期：${formattedDate}</span>
+    container.innerHTML = records.map(record => {
+        // 處理繳費狀態的樣式
+        const statusClass = record.payment_status === '已繳費' ? 'status-paid' : 'status-unpaid';
+        const statusText = record.payment_status || '未繳費';
+        
+        // 處理日期顯示
+        const dateStr = record.created_at 
+            ? new Date(record.created_at).toLocaleDateString('zh-TW') 
+            : '未知日期';
+
+        return `
+            <div class="registration-card" style="border: 1px solid #eee; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: #333;">${record.course_name || '未命名課程'}</h3>
+                        <span class="registration-date" style="font-size: 0.9rem; color: #888;">報名日期：${dateStr}</span>
                     </div>
-                    <div class="registration-info-item">
-                        <i class="fas fa-credit-card"></i>
-                        <span>繳費方式：${registration.payment_method}</span>
+                    <span class="status-badge ${statusClass}" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; background: ${statusText === '已繳費' ? '#d4edda' : '#fff3cd'}; color: ${statusText === '已繳費' ? '#155724' : '#856404'};">
+                        ${statusText}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="info-row" style="margin-bottom: 5px;">
+                        <strong style="color: #555;">學員姓名：</strong> ${record.name}
                     </div>
-                    ${registration.payment_method === '轉帳繳費' && registration.account_last5 ? `
-                    <div class="registration-info-item">
-                        <i class="fas fa-hashtag"></i>
-                        <span>帳號後5碼：${registration.account_last5}</span>
+                    <div class="info-row" style="margin-bottom: 5px;">
+                        <strong style="color: #555;">繳費方式：</strong> ${record.payment_method || '-'}
                     </div>
-                    ` : ''}
+                    ${record.payment_method === '轉帳繳費' ? `
+                    <div class="info-row" style="margin-bottom: 5px;">
+                        <strong style="color: #555;">帳號末5碼：</strong> ${record.account_last5 || '-'}
+                    </div>` : ''}
                 </div>
             </div>
-            <div class="registration-card-footer">
-                <button class="btn btn-primary" onclick='showRegistrationDetail(${JSON.stringify(registration)})'>
-                    <i class="fas fa-eye"></i> 查看詳細
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-// 顯示報名詳細資料
-function showRegistrationDetail(registration) {
-    const date = new Date(registration.registration_date);
-    const formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
-    
-    const paymentStatusClass = {
-        '未繳費': 'badge-warning',
-        '已繳費': 'badge-success',
-        '已確認': 'badge-success'
-    }[registration.payment_status] || 'badge-warning';
-    
-    let bankInfo = '';
-    if (registration.payment_method === '轉帳繳費' && typeof BANK_ACCOUNT_INFO !== 'undefined') {
-        const info = BANK_ACCOUNT_INFO.getDisplayInfo();
-        bankInfo = `
-            <section>
-                <h4 style="color: #2c5aa0; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #2c5aa0;">
-                    <i class="fas fa-university"></i> 銀行轉帳資訊
-                </h4>
-                <div class="bank-info-card">
-                    <h5 style="color: white !important; margin-bottom: 1rem;">
-                        <i class="fas fa-university"></i> ${info.title}
-                    </h5>
-                    <div class="bank-details">
-                        ${info.details.map(item => `
-                            <div class="bank-detail-item">
-                                <strong>${item.label}：</strong>
-                                <span>${item.value}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="bank-notes">
-                        <h6><i class="fas fa-exclamation-circle"></i> 匯款注意事項</h6>
-                        <ul>
-                            ${info.notes.map(note => `<li>${note}</li>`).join('')}
-                        </ul>
-                    </div>
-                    ${registration.account_last5 ? `
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
-                        <strong style="color: rgba(255,255,255,0.9);">您填寫的帳號後5碼：</strong>
-                        <span style="color: white; font-size: 1.2rem; font-weight: bold;">${registration.account_last5}</span>
-                    </div>
-                    ` : ''}
-                </div>
-            </section>
         `;
-    }
-    
-    const content = `
-        <div style="display: grid; gap: 1.5rem;">
-            <section>
-                <h4 style="color: #2c5aa0; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #2c5aa0;">
-                    <i class="fas fa-book"></i> 課程資訊
-                </h4>
-                <div style="display: grid; gap: 0.75rem;">
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">課程名稱：</strong>
-                        <span>${registration.course_name}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">報名日期：</strong>
-                        <span>${formattedDate}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">繳費狀態：</strong>
-                        <span class="badge ${paymentStatusClass}">${registration.payment_status || '未繳費'}</span>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h4 style="color: #2c5aa0; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #2c5aa0;">
-                    <i class="fas fa-user"></i> 報名資料
-                </h4>
-                <div style="display: grid; gap: 0.75rem;">
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">姓名：</strong>
-                        <span>${registration.name}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">性別：</strong>
-                        <span>${registration.gender}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">年齡區段：</strong>
-                        <span>${registration.age_range}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">手機號碼：</strong>
-                        <span>${registration.mobile}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">宗教信仰：</strong>
-                        <span>${registration.religion}</span>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h4 style="color: #2c5aa0; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #2c5aa0;">
-                    <i class="fas fa-exclamation-triangle"></i> 緊急聯絡人
-                </h4>
-                <div style="display: grid; gap: 0.75rem;">
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">聯絡人姓名：</strong>
-                        <span>${registration.emergency_contact}</span>
-                    </div>
-                    <div style="display: flex; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong style="min-width: 120px; color: #2c5aa0;">聯絡人電話：</strong>
-                        <span>${registration.emergency_phone}</span>
-                    </div>
-                </div>
-            </section>
-
-            ${bankInfo}
-
-            ${registration.notes ? `
-            <section>
-                <h4 style="color: #2c5aa0; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #2c5aa0;">
-                    <i class="fas fa-sticky-note"></i> 備註
-                </h4>
-                <div style="padding: 1rem; background: #f8f9fa; border-radius: 4px; white-space: pre-wrap;">
-                    ${registration.notes}
-                </div>
-            </section>
-            ` : ''}
-        </div>
-    `;
-    
-    document.getElementById('detailContent').innerHTML = content;
-    document.getElementById('detailModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-// 關閉詳細資料 Modal
-function closeDetailModal() {
-    document.getElementById('detailModal').classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-// 點擊 Modal 外部關閉
-document.getElementById('detailModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeDetailModal();
-    }
-});
-
-// 顯示提示訊息
-function showAlert(message, type = 'info') {
-    const container = document.getElementById('alertContainer');
-    const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
-    const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
-    
-    const alert = document.createElement('div');
-    alert.className = `alert ${alertClass}`;
-    alert.innerHTML = `
-        <i class="fas fa-${icon}"></i>
-        <span>${message}</span>
-    `;
-    
-    container.appendChild(alert);
-    
-    // 3秒後自動移除
-    setTimeout(() => {
-        alert.style.opacity = '0';
-        alert.style.transform = 'translateY(-20px)';
-        alert.style.transition = 'all 0.3s ease';
-        setTimeout(() => alert.remove(), 300);
-    }, 3000);
+    }).join('');
 }
