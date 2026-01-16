@@ -1,4 +1,5 @@
 import { getAllCourses, createCourse, updateCourse, deleteCourse } from '../utils/supabase';
+import { jsonResponse } from '../utils/response';
 
 export async function handleCoursesRequest(request, env) {
   const url = new URL(request.url);
@@ -68,15 +69,3 @@ export async function handleCoursesRequest(request, env) {
   }
 }
 
-// 輔助函式
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    }
-  });
-}

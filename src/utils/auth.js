@@ -23,11 +23,14 @@ export async function createJWT(userData, secret) {
   };
 
   // Base64 URL 編碼
-  const base64UrlEncode = (obj) => {
-    const json = JSON.stringify(obj);
-    const base64 = btoa(json);
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  };
+const base64UrlEncode = (obj) => {
+  const json = JSON.stringify(obj);
+  
+  // 修正：加入 unescape(encodeURIComponent(...)) 以支援中文 (Unicode)
+  const base64 = btoa(unescape(encodeURIComponent(json)));
+  
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+};
 
   const encodedHeader = base64UrlEncode(header);
   const encodedPayload = base64UrlEncode(payload);

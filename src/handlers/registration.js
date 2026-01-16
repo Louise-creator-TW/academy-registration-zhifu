@@ -7,6 +7,7 @@ import { verifyJWT } from '../utils/auth';
 import { createRegistration, updateCourseEnrollment, updateRegistrationNotificationStatus } from '../utils/supabase';
 import { sendPushMessage, recordUserTag } from '../utils/line-api';
 import { createRegistrationConfirmationCard, createPaymentReminderCard } from '../templates/flex-messages';
+import { jsonResponse } from '../utils/response';
 
 export async function handleRegistrationSubmit(request, env, ctx) {
   try {
@@ -204,18 +205,3 @@ async function handleLineNotificationAndTagging(registration, lineUserId, formDa
   }
 }
 
-/**
- * JSON Response 輔助函數
- */
-function jsonResponse(data, options = {}) {
-  return new Response(JSON.stringify(data), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      ...options.headers
-    },
-    status: options.status || 200
-  });
-}

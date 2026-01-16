@@ -4,7 +4,7 @@
  */
 
 import { getUserRegistrations } from '../utils/supabase';
-
+import { jsonResponse } from '../utils/response';
 /**
  * 處理報名記錄請求
  */
@@ -19,7 +19,7 @@ export async function handleRegistrationsRequest(request, env) {
             // 從 query parameters 取得參數
             const limit = parseInt(url.searchParams.get('limit')) || 100;
             const page = parseInt(url.searchParams.get('page')) || 1;
-            const sort = url.searchParams.get('sort') || '-registration_date';
+            const sort = url.searchParams.get('sort') || '-created_at';
             
             console.log('📥 取得報名列表');
             console.log('   Limit:', limit);
@@ -71,7 +71,7 @@ export async function handleRegistrationsRequest(request, env) {
 /**
  * 取得所有報名記錄
  */
-async function getAllRegistrations(env, limit = 100, sort = '-registration_date') {
+async function getAllRegistrations(env, limit = 100, sort = '-created_at') {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
     
@@ -92,18 +92,4 @@ async function getAllRegistrations(env, limit = 100, sort = '-registration_date'
     
     console.log('✅ 取得報名記錄成功:', data?.length || 0, '筆');
     return data || [];
-}
-
-/**
- * JSON Response 輔助函數
- */
-function jsonResponse(data, options = {}) {
-    return new Response(JSON.stringify(data), {
-        headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            ...options.headers
-        },
-        status: options.status || 200
-    });
 }

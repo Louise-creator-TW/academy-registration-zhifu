@@ -4,6 +4,7 @@
  */
 
 import { addLineTag } from '../utils/line-api';
+import { jsonResponse } from '../utils/response';
 
 export async function handleLineTagging(request, env) {
   try {
@@ -33,15 +34,4 @@ export async function handleLineTagging(request, env) {
       { status: 500 }
     );
   }
-}
-
-function jsonResponse(data, options = {}) {
-  return new Response(JSON.stringify(data), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      ...options.headers
-    },
-    status: options.status || 200
-  });
 }
